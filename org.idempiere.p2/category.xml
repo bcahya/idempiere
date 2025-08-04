@@ -51,6 +51,9 @@
    <feature id="org.eclipse.equinox.executable">
       <category name="idempiere.server"/>
    </feature>
+   <feature id="id.sistematika.base.feature">
+      <category name="sistematika"/>
+   </feature>
    <category-def name="idempiere.repository" label="iDempiere Repository"/>
    <category-def name="idempiere.server" label="iDempiere Server">
       <category name="idempiere.repository"/>

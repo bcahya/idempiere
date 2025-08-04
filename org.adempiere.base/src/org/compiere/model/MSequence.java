@@ -94,6 +94,7 @@ public class MSequence extends X_AD_Sequence
 		if (adempiereSys && AD_Client_ID > 11)
 			adempiereSys = false;
 		//
+		adempiereSys = false;
 		if (CLogMgt.isLevel(Level.FINER))
 			s_log.log(Level.FINER, TableName + " - AdempiereSys=" + adempiereSys  + " [" + trxName + "]");
 

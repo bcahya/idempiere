@@ -162,7 +162,7 @@ public class WPreference extends WQuickEntry implements EventListener<Event>, Va
 		div.appendChild(addgadgets);		
 		this.appendChild(div);
 
-		if (Env.getAD_Client_ID(Env.getCtx()) <= 20 && Env.getAD_User_ID(Env.getCtx()) <= 102) {
+		if (Env.getAD_Client_ID(Env.getCtx()) <= 1000010 && Env.getAD_User_ID(Env.getCtx()) <= 102) {
 			this.appendChild(new Space());
 			adempiereSys = new WYesNoEditor(Ini.P_ADEMPIERESYS, Msg.getMsg(Env.getCtx(), Ini.P_ADEMPIERESYS, true),
 					null, false, false, true);

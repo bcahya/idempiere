@@ -29,7 +29,11 @@
 		<idempiere-orbit-url>https://download.eclipse.org/tools/orbit/simrel/orbit-aggregation/release/4.29.0</idempiere-orbit-url>
 		<idempiere-orbit-repository-id>orbit-2023-09</idempiere-orbit-repository-id>
 		<url.file.srv>https://raw.githubusercontent.com/idempiere/binary.file/master</url.file.srv>
-		<extra.iu.install>org.eclipse.equinox.p2.director,org.idempiere.equinox.p2.director.feature.feature.group</extra.iu.install>
+		<extra.iu.install>
+			org.eclipse.equinox.p2.director,
+			org.idempiere.equinox.p2.director.feature.feature.group
+			id.sistematika.base.feature.feature.group
+		</extra.iu.install>
 		<idempiere.product.id>org.adempiere.server.product</idempiere.product.id>
 		<skipClean>false</skipClean>
     <target.version>17</target.version>

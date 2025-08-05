@@ -160,7 +160,19 @@ public class ProcessButtonPopup extends Menupopup implements EventListener<Event
 							@Override
 							public void onCallback(Boolean result) {
 								if (result) {
-									windowContent.executeButtonProcess(pb, true, gridTab.getAD_Table_ID(), gridTab.getRecord_ID(), true, postCallback);
+									//[SIS] - process selected if it is grid view and row selection
+							        int[] indices = gridTab.getSelection();
+									if (indices.length > 0 && pb.getADTabpanel().isGridView())
+									{
+										for (int i = 0; i < indices.length; i++) {
+											int keyID = gridTab.getKeyID(indices[i]);
+											if (keyID > 0) {
+												windowContent.executeButtonProcess(pb, true, gridTab.getAD_Table_ID(), keyID, true, postCallback);
+											}
+										}
+									} else {
+										windowContent.executeButtonProcess(pb, true, gridTab.getAD_Table_ID(), gridTab.getRecord_ID(), true, postCallback);
+									}
 								}
 							}
 						};

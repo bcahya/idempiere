@@ -31,13 +31,13 @@
 		<url.file.srv>https://raw.githubusercontent.com/idempiere/binary.file/master</url.file.srv>
 		<extra.iu.install>
 			org.eclipse.equinox.p2.director,
-			org.idempiere.equinox.p2.director.feature.feature.group
+			org.idempiere.equinox.p2.director.feature.feature.group,
 			id.sistematika.base.feature.feature.group
 		</extra.iu.install>
 		<idempiere.product.id>org.adempiere.server.product</idempiere.product.id>
 		<skipClean>false</skipClean>
-    <target.version>17</target.version>
-    <maven.compiler.source>17</maven.compiler.source>
+	    <target.version>17</target.version>
+	    <maven.compiler.source>17</maven.compiler.source>
 		<maven.compiler.target>17</maven.compiler.target>
 	</properties>
 	

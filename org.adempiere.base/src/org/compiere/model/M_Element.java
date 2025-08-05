@@ -235,7 +235,7 @@ public class M_Element extends X_AD_Element
 					.append(", Description=").append(DB.TO_STRING(getDescription()))
 					.append(", Help=").append(DB.TO_STRING(getHelp()))
 					.append(", Placeholder=").append(DB.TO_STRING(getPlaceholder()))
-					.append(" WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")");
+					.append(" WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")"); //[SIS] - enchance use uuid reference
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
 				if (log.isLoggable(Level.FINE)) log.fine("afterSave - Columns updated #" + no);
 
@@ -245,7 +245,7 @@ public class M_Element extends X_AD_Element
 					.append(", Name=").append(DB.TO_STRING(getName()))
 					.append(", Description=").append(DB.TO_STRING(getDescription()))
 					.append(", Help=").append(DB.TO_STRING(getHelp()))
-					.append(", AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")")
+					.append(", AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")") //[SIS] - enchance use uuid reference
 					.append(" WHERE UPPER(ColumnName)=")
 					.append(DB.TO_STRING(getColumnName().toUpperCase()))
 					.append(" AND IsCentrallyMaintained='Y' AND AD_Element_ID IS NULL");
@@ -257,7 +257,7 @@ public class M_Element extends X_AD_Element
 					.append(", Description=").append(DB.TO_STRING(getDescription()))
 					.append(", Help=").append(DB.TO_STRING(getHelp()))
 					.append(", Placeholder=").append(DB.TO_STRING(getPlaceholder()))
-					.append(" WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")")
+					.append(" WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")") //[SIS] - enchance use uuid reference
 					.append(" AND IsCentrallyMaintained='Y'");
 				no += DB.executeUpdate(sql.toString(), get_TrxName());
 				if (log.isLoggable(Level.FINE)) log.fine("Parameters updated #" + no);
@@ -269,7 +269,7 @@ public class M_Element extends X_AD_Element
 					.append(", Description=").append(DB.TO_STRING(getDescription()))
 					.append(", Help=").append(DB.TO_STRING(getHelp()))
 					.append(", Placeholder=").append(DB.TO_STRING(getPlaceholder()))
-					.append(" WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")")
+					.append(" WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU = "+DB.TO_STRING(uuID)+")") //[SIS] - enchance use uuid reference
 					.append(" AND IsCentrallyMaintained='Y'");
 				no += DB.executeUpdate(sql.toString(), get_TrxName());
 				if (log.isLoggable(Level.FINE)) log.fine("Info Column updated #" + no);
@@ -287,7 +287,7 @@ public class M_Element extends X_AD_Element
 					.append(", Help=").append(DB.TO_STRING(getHelp()))
 					.append(", Placeholder=").append(DB.TO_STRING(getPlaceholder()))
 					.append(" WHERE AD_Column_ID IN (SELECT AD_Column_ID FROM AD_Column WHERE AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU="+DB.TO_STRING(uuID)+")")
-					.append(") AND IsCentrallyMaintained='Y'");
+					.append(") AND IsCentrallyMaintained='Y'"); //[SIS] - enchance use uuid reference
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
 				if (log.isLoggable(Level.FINE)) log.fine("Fields updated #" + no);
 				
@@ -303,7 +303,7 @@ public class M_Element extends X_AD_Element
 					.append(" WHERE IsCentrallyMaintained='Y'")	
 					.append(" AND EXISTS (SELECT * FROM AD_Column c ")
 						.append("WHERE c.AD_Column_ID=AD_PrintFormatItem.AD_Column_ID AND c.AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU="+DB.TO_STRING(uuID)+")")
-						.append(get_ID()).append(")");
+						.append(")"); //[SIS] - enchance use uuid reference
 				no = DB.executeUpdate(sql.toString(), get_TrxName());
 				if (log.isLoggable(Level.FINE)) log.fine("PrintFormatItem updated #" + no);
 			}
@@ -329,7 +329,7 @@ public class M_Element extends X_AD_Element
 	 * @param pi
 	 */
 	public void renameDBColumn(String newColumnName, ProcessInfo pi) {
-		List<MColumn> columns = new Query(getCtx(), MColumn.Table_Name, "AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU=?)", get_TrxName())
+		List<MColumn> columns = new Query(getCtx(), MColumn.Table_Name, "AD_Element_ID=(SELECT AD_Element_ID FROM AD_Element WHERE AD_Element_UU=?)", get_TrxName()) //[SIS] - enchance use uuid reference
 				.setParameters(get_UUID())
 				.setOrderBy("AD_Column_ID")
 				.list();

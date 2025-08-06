@@ -160,7 +160,7 @@ public class ProcessButtonPopup extends Menupopup implements EventListener<Event
 							@Override
 							public void onCallback(Boolean result) {
 								if (result) {
-									//[SIS] - process selected if it is grid view and row selection
+									//[SIS] Start - process selected if it is grid view and row selection
 							        int[] indices = gridTab.getSelection();
 									if (indices.length > 0 && pb.getADTabpanel().isGridView())
 									{
@@ -173,6 +173,7 @@ public class ProcessButtonPopup extends Menupopup implements EventListener<Event
 									} else {
 										windowContent.executeButtonProcess(pb, true, gridTab.getAD_Table_ID(), gridTab.getRecord_ID(), true, postCallback);
 									}
+									//[SIS] End - process selected if it is grid view and row selection
 								}
 							}
 						};

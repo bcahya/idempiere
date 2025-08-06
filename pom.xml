@@ -68,12 +68,12 @@
 		<module>org.idempiere.zk.breeze.theme</module>
 		<module>org.idempiere.zk.iceblue_c.theme</module>
 		<module>org.idempiere.p2.targetplatform</module>
+		<module>../plugins/id.sistematika.base.feature</module>
 		<module>../plugins/id.sistematika.base</module>
 		<module>../plugins/id.sistematika.base.api</module>
 		<module>../plugins/jpiere.plugin.webui.matrixwindow</module>
-		<module>../plugins/jpiere.plugin.webui.formwindow</module>
 		<module>../plugins/jpiere.plugin.webui.simpleinputwindow</module>
-		<module>../plugins/id.sistematika.base.feature</module>
+		<module>../plugins/jpiere.plugin.webui.formwindow</module>
 	</modules>
 
 </project>

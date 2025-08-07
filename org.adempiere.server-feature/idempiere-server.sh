@@ -52,7 +52,8 @@ VMOPTS="-Dorg.osgi.framework.bootdelegation=sun.security.ssl
 --add-exports java.base/jdk.internal.ref=ALL-UNNAMED
 --add-exports java.desktop/sun.awt=ALL-UNNAMED
 --add-exports java.sql.rowset/com.sun.rowset=ALL-UNNAMED
---add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
+--add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED
+--add-exports java.base/sun.reflect.generics.reflectiveObjects=ALL-UNNAMED"
 
 IDEMPIERE_JAVA_OPTIONS=${JAVA_OPTS:-$IDEMPIERE_JAVA_OPTIONS}
 

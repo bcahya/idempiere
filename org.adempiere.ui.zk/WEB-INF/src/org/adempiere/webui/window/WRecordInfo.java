@@ -17,6 +17,7 @@
 package org.adempiere.webui.window;
 
 import java.math.BigDecimal;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
@@ -61,6 +62,7 @@ import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.NamePair;
+import org.compiere.util.SIS_DBChangeLogIssue;
 import org.compiere.util.Util;
 import org.zkoss.zhtml.Pre;
 import org.zkoss.zhtml.Text;
@@ -428,7 +430,16 @@ public class WRecordInfo extends Window implements EventListener<Event>
 		ResultSet rs = null;
 		try
 		{
-			pstmt = DB.prepareStatement (sql, null);
+			//[SIS] - Move Changelog issue
+			//////////////////////////////////////
+			if (SIS_DBChangeLogIssue.isCLI(MChangeLog.Table_Name)) {
+				Connection con = SIS_DBChangeLogIssue.getConnectionCLI();
+				pstmt = con.prepareStatement(sql.toString());
+			} else {
+				pstmt = DB.prepareStatement (sql, null);
+			}
+			////////////////////////////////////////////////////
+			
 			pstmt.setInt (1, dse.AD_Table_ID);
 			pstmt.setInt (2, Record_ID);
 			pstmt.setString (3, Record_UU);

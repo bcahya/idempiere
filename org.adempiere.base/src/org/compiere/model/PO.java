@@ -23,6 +23,7 @@ import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.sql.Blob;
 import java.sql.Clob;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -73,6 +74,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Evaluatee;
 import org.compiere.util.Language;
 import org.compiere.util.Msg;
+import org.compiere.util.SIS_DBChangeLogIssue;
 import org.compiere.util.SecureEngine;
 import org.compiere.util.Trace;
 import org.compiere.util.Trx;
@@ -1563,9 +1565,19 @@ public abstract class PO
 		if (log.isLoggable(Level.FINEST)) log.finest(get_WhereClause(true,uuID));
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
+		Connection con = null;
 		try
 		{
-			pstmt = DB.prepareStatement(sql.toString(), m_trxName);	//	local trx only
+			//[SIS] - Move Changelog issue
+			//////////////////////////////////////
+			if (SIS_DBChangeLogIssue.isCLI(get_TableName())) {
+				con = SIS_DBChangeLogIssue.getConnectionCLI();
+				pstmt = con.prepareStatement(sql.toString());
+			} else {
+				pstmt = DB.prepareStatement(sql.toString(), m_trxName);
+			}// local trx only
+			////////////////////////////////////////////////////
+			
 			if (!Util.isEmpty(uuID, true))
 			{
 				pstmt.setString(1, uuID);
@@ -3321,12 +3333,21 @@ public abstract class PO
 				params.addAll(optimisticLockingParams);
 			
 			int no = 0;
-			if (isUseTimeoutForUpdate())
-				no = withValues ? DB.executeUpdateEx(sql.toString(), m_trxName, QUERY_TIME_OUT)
-								: DB.executeUpdateEx(sql.toString(), params.toArray(), m_trxName, QUERY_TIME_OUT);
-			else
-				no = withValues ? DB.executeUpdate(sql.toString(), m_trxName)
-						 		: DB.executeUpdate(sql.toString(), params.toArray(), false, m_trxName);
+			
+			//[SIS] - Move Changelog issue
+			//////////////////////////////////////
+			if (SIS_DBChangeLogIssue.isCLI(get_TableName())) {
+				SIS_DBChangeLogIssue.executeUpdateCLI(sql.toString(), params);
+			} else {
+				if (isUseTimeoutForUpdate())
+					no = withValues ? DB.executeUpdateEx(sql.toString(), m_trxName, QUERY_TIME_OUT)
+									: DB.executeUpdateEx(sql.toString(), params.toArray(), m_trxName, QUERY_TIME_OUT);
+				else
+					no = withValues ? DB.executeUpdate(sql.toString(), m_trxName)
+							 		: DB.executeUpdate(sql.toString(), params.toArray(), false, m_trxName);
+			}// local trx only
+			////////////////////////////////////////////////////
+			
 			boolean ok = no == 1;
 			if (ok)
 				ok = lobSave();
@@ -3573,8 +3594,18 @@ public abstract class PO
 		StringBuilder sqlInsert = new StringBuilder();
 		AD_ChangeLog_ID = buildInsertSQL(sqlInsert, withValues, params, session, AD_ChangeLog_ID, false, null);
 		//
-		int no = withValues ? DB.executeUpdate(sqlInsert.toString(), m_trxName) 
-							: DB.executeUpdate(sqlInsert.toString(), params.toArray(), false, m_trxName);
+		
+		//[SIS] - Move Changelog issue
+		//////////////////////////////////////
+		int no = 1;
+		if (SIS_DBChangeLogIssue.isCLI(get_TableName())) {
+			SIS_DBChangeLogIssue.executeUpdateCLI(sqlInsert.toString(), params);
+		} else {
+			no = withValues ? DB.executeUpdate(sqlInsert.toString(), m_trxName) 
+					: DB.executeUpdate(sqlInsert.toString(), params.toArray(), false, m_trxName);
+		}// local trx only
+		////////////////////////////////////////////////////
+		
 		boolean ok = no == 1;
 		if (ok)
 		{

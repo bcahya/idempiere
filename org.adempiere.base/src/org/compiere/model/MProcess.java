@@ -525,7 +525,7 @@ public class MProcess extends X_AD_Process implements ImmutablePOSupport
 			|| is_ValueChanged("Description") || is_ValueChanged("Help"))
 		{
 			// Update Menu
-			MMenu[] menues = MMenu.get(getCtx(), "AD_Process_ID=" + getAD_Process_ID(), get_TrxName());
+			MMenu[] menues = MMenu.get(getCtx(), "AD_Process_ID=(select AD_Process_ID from AD_Process where AD_Process_UU='" + get_UUID()+"')", get_TrxName());
 			for (int i = 0; i < menues.length; i++)
 			{
 				menues[i].setIsActive(isActive());
@@ -534,7 +534,7 @@ public class MProcess extends X_AD_Process implements ImmutablePOSupport
 				menues[i].saveEx();
 			}
 			// Update workflow node
-			MWFNode[] nodes = MWFNode.getWFNodes(getCtx(), "AD_Process_ID=" + getAD_Process_ID(), get_TrxName());
+			MWFNode[] nodes = MWFNode.getWFNodes(getCtx(), "AD_Process_ID=(select AD_Process_ID from AD_Process where AD_Process_UU='" + get_UUID()+"')", get_TrxName());
 			for (int i = 0; i < nodes.length; i++)
 			{
 				boolean changed = false;

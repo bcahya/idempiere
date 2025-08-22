@@ -310,7 +310,7 @@ public class DBReadReplica {
 
 				if (replicaTs.before(lastTs)) {
 					// not usable yet
-					continue; // next urlConn
+//					continue; // next urlConn [SIS] - use dummy replica
 				}
 				if (conn != null) {
 					retConn = conn;

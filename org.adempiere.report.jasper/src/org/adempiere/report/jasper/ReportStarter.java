@@ -941,7 +941,16 @@ public class ReportStarter implements ProcessCall, ClientProcess
 			report = getClassResourceLoader().getResource(reportPath);
 		} else if (BundleResourceLoader.isBundleResourcePath(reportPath)) {
 			report = getBundleResourceLoader().getResource(reportPath);
-		} else {
+		} 
+		
+		//[SIS] - Multi Report
+		////////////////////////////
+		else if (AttachmentResourceLoader.isSISReportDetailResourcePath(reportPath)) {
+			report = getAttachmentResourceLoader().getReportFile(processInfo, reportPath);
+		} 
+		////////////////////////////
+		
+		else {
 			report = new File(REPORT_HOME, reportPath);
 		}
 

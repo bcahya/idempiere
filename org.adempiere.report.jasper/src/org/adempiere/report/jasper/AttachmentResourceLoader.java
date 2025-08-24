@@ -32,9 +32,13 @@ import java.util.ArrayList;
 import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
+import org.compiere.model.MPInstancePara;
 import org.compiere.model.MProcess;
+import org.compiere.model.MTable;
 import org.compiere.process.ProcessInfo;
+import org.compiere.process.ProcessInfoParameter;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.utils.DigestOfFile;
@@ -54,6 +58,11 @@ public class AttachmentResourceLoader {
 
 	private static final String ATTACHMENT_PATH_PREFIX = "attachment:";
 
+	//[SIS] - Multi Report
+	////////////////////////////
+	private static final String SIS_REPORTDETAIL_PATH_PREFIX = "sis_reportdetail";
+	////////////////////////
+	
 	/**
 	 * 
 	 * @param destinationFolder
@@ -73,6 +82,33 @@ public class AttachmentResourceLoader {
 		String name = reportPath.substring(ATTACHMENT_PATH_PREFIX.length()).trim();
 		MProcess process = new MProcess(Env.getCtx(), processInfo.getAD_Process_ID(), processInfo.getTransactionName());
 		attachment = process.getAttachment();
+		
+		//[SIS] - Multi Report
+		////////////////////////////
+		if (isSISReportDetailResourcePath(reportPath)) {
+			String uuIDPIP = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+					"select "
+					+ "    pip.ad_pinstance_para_uu "
+					+ "from ad_pinstance_para pip "
+					+ "where pip.ad_pinstance_id = ? "
+					+ "and pip.parametername = 'SIS_ProcessDetailReport_ID' ", processInfo.getAD_PInstance_ID());
+			MPInstancePara pip = new MPInstancePara(Env.getCtx(), uuIDPIP, processInfo.getTransactionName());
+			int recordID = pip.getP_Number().intValue();
+			name = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+					"select "
+					+ "    jasperreport "
+					+ "from sis_processdetailreport "
+					+ "where sis_processdetailreport_id = ? ", recordID);
+			if (name == null || name.equalsIgnoreCase("")) {
+				throw new AdempiereException("jasper report name not found!");
+			}
+			attachment = MAttachment.get(Env.getCtx(), MTable.getTable_ID("SIS_ProcessDetailReport"), recordID, processInfo.getTransactionName());
+			if (attachment == null) {
+				throw new AdempiereException("Attachment for report detail not found!");
+			}
+		}
+		////////////////////////////
+		
 		if (attachment != null) {
 			MAttachmentEntry[] entries = attachment.getEntries();
 			MAttachmentEntry entry = null;
@@ -195,4 +231,11 @@ public class AttachmentResourceLoader {
 	public static boolean isAttachmentResourcePath(String path) {
 		return path != null && path.startsWith(AttachmentResourceLoader.ATTACHMENT_PATH_PREFIX);
 	}
+	
+	//[SIS] - Multi Report
+	////////////////////////////
+	public static boolean isSISReportDetailResourcePath(String path) {
+		return path != null && path.startsWith(AttachmentResourceLoader.SIS_REPORTDETAIL_PATH_PREFIX);
+	}
+	////////////////////////////
 }

@@ -517,7 +517,7 @@ public class MInOut extends X_M_InOut implements DocAction, IDocsPostProcess
 
 		if (to.copyLinesFrom(from, counter, setOrder) <= 0)
 			throw new IllegalStateException("Could not create Shipment Lines");
-
+		
 		return to;
 	}	//	copyFrom
 
@@ -1633,7 +1633,7 @@ public class MInOut extends X_M_InOut implements DocAction, IDocsPostProcess
 		}
 
 		// Set the definite document number after completed (if needed)
-		setDefiniteDocumentNo();
+//		setDefiniteDocumentNo(); //[SIS] - move documentno to queue
 
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)

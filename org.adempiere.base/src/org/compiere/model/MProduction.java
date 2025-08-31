@@ -162,7 +162,7 @@ public class MProduction extends X_M_Production implements DocAction {
 		}
 
 		// Set the definite document number after completed (if needed)
-		setDefiniteDocumentNo();
+//		setDefiniteDocumentNo(); //[SIS] - move documentno to queue
 
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)

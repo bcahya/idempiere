@@ -74,6 +74,7 @@
 		<module>../plugins/jpiere.plugin.webui.matrixwindow</module>
 		<module>../plugins/jpiere.plugin.webui.simpleinputwindow</module>
 		<module>../plugins/jpiere.plugin.webui.formwindow</module>
+		<module>../plugins/org.devcoffee.idempiere.s3storage</module>
 	</modules>
 
 </project>

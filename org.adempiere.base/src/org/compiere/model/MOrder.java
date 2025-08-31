@@ -2114,7 +2114,7 @@ public class MOrder extends X_C_Order implements DocAction
 		}
 
 		// Set the definite document number after completed (if needed)
-		setDefiniteDocumentNo();
+//		setDefiniteDocumentNo(); //[SIS] - move documentno to queue
 
 		//	Offers
 		if (MDocType.DOCSUBTYPESO_Proposal.equals(DocSubTypeSO)

@@ -3544,9 +3544,21 @@ public abstract class PO
 				if (dt == -1)
 					dt = p_info.getColumnIndex("C_DocType_ID");
 				if (dt != -1)		//	get based on Doc Type (might return null)
-					value = DB.getDocumentNo(get_ValueAsInt(dt), m_trxName, false, this);
+					
+					//[SIS] - set trx to null when generate new documentno
+					/////////////////////////////
+//					value = DB.getDocumentNo(get_ValueAsInt(dt), m_trxName, false, this);
+					value = DB.getDocumentNo(get_ValueAsInt(dt), null, false, this); //[SIS] - set trx to null when generate new documentno
+					/////////////////////////////
+				
 				if (value == null)	//	not overwritten by DocType and not manually entered
-					value = DB.getDocumentNo(getAD_Client_ID(), p_info.getTableName(), m_trxName, this);
+					
+					//[SIS] - set trx to null when generate new documentno
+					/////////////////////////////
+//					value = DB.getDocumentNo(getAD_Client_ID(), p_info.getTableName(), m_trxName, this);
+					value = DB.getDocumentNo(getAD_Client_ID(), p_info.getTableName(), null, this);
+					/////////////////////////////
+				
 				set_ValueNoCheck(columnName, value);
 			}
 		}

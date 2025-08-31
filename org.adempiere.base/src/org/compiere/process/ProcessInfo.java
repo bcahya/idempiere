@@ -1190,6 +1190,7 @@ public class ProcessInfo implements Serializable
 		List<MPInstance> processInstanceList = new Query(Env.getCtx(), MPInstance.Table_Name, whereClause.toString(), null)
 				.setParameters(queryParams)
 				.setClient_ID()
+				.setForUpdate(true) //[SIS] - tambah forupdate untuk menjaga concurrency consistency
 				.setOnlyActiveRecords(true).list();
 
 		if (processInstanceList == null || processInstanceList.isEmpty())

@@ -2045,7 +2045,7 @@ public class MPayment extends X_C_Payment
 		}
 
 		// Set the definite document number after completed (if needed)
-		setDefiniteDocumentNo();
+//		setDefiniteDocumentNo(); //[SIS] - move documentno to queue
 
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)

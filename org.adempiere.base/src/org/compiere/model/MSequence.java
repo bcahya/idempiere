@@ -336,6 +336,7 @@ public class MSequence extends X_AD_Sequence
 		int AD_Sequence_ID = seq.getAD_Sequence_ID();
 		boolean isStartNewYear = seq.isStartNewYear();
 		boolean isStartNewMonth = seq.isStartNewMonth();
+		boolean isStartNewDay = seq.isStartNewYear(); //[SIS] - add start new day
 		String dateColumn = seq.getDateColumn();
 		boolean isUseOrgLevel = seq.isOrgLevelSequence();
 		String orgColumn = seq.getOrgColumn();
@@ -408,8 +409,15 @@ public class MSequence extends X_AD_Sequence
 			if (isStartNewYear)
 			{
 				SimpleDateFormat sdf = null;
-				if (isStartNewMonth)
+				
+				//[SIS] - add start new day
+				/////////////////////////////
+				if (isStartNewDay)
+					sdf = new SimpleDateFormat("yyyyMMdd");
+				else if (isStartNewMonth)
 					sdf = new SimpleDateFormat("yyyyMM");
+				////////////////////////////////
+				
 				else
 					sdf = new SimpleDateFormat("yyyy");
 				

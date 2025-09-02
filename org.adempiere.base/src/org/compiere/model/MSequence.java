@@ -336,7 +336,7 @@ public class MSequence extends X_AD_Sequence
 		int AD_Sequence_ID = seq.getAD_Sequence_ID();
 		boolean isStartNewYear = seq.isStartNewYear();
 		boolean isStartNewMonth = seq.isStartNewMonth();
-		boolean isStartNewDay = seq.isStartNewYear(); //[SIS] - add start new day
+		boolean isStartNewDay = seq.get_ValueAsBoolean("SIS_StartNewDay"); //[SIS] - add start new day
 		String dateColumn = seq.getDateColumn();
 		boolean isUseOrgLevel = seq.isOrgLevelSequence();
 		String orgColumn = seq.getOrgColumn();

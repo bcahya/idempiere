@@ -575,6 +575,10 @@ public class WAcctViewerData
 					RModel.TABLE_ALIAS+".PostingType",
 					MFactAcct.POSTINGTYPE_AD_Reference_ID,
 					null));
+		
+		//[SIS] - Penambahan kolom matching di jurnal
+		rm.addColumn(new RColumn(ctx, "SIS_Matching", DisplayType.String));
+		
 		return rm;
 	} // createRModel
 	

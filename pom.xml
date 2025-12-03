@@ -75,6 +75,7 @@
 		<module>../plugins/jpiere.plugin.webui.simpleinputwindow</module>
 		<module>../plugins/jpiere.plugin.webui.formwindow</module>
 		<module>../plugins/org.devcoffee.idempiere.s3storage</module>
+		<module>../plugins/jpiere.plugin.delete</module>
 	</modules>
 
 </project>

@@ -51,8 +51,10 @@ import org.adempiere.base.Service;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DBException;
 import org.adempiere.util.IProcessUI;
+import org.compiere.model.MAttachment;
 import org.compiere.model.MLanguage;
 import org.compiere.model.MPInstance;
+import org.compiere.model.MPInstancePara;
 import org.compiere.model.MProcess;
 import org.compiere.model.MQuery;
 import org.compiere.model.MSysConfig;
@@ -233,6 +235,31 @@ public class ReportStarter implements ProcessCall, ClientProcess
         List<File> exportFileList = new ArrayList<File>();
         PrintInfo printInfo = null;
         String reportFilePath = reportInfo.getReportFilePath();
+        
+        //[SIS] - Multi Report
+  		////////////////////////////
+  		if (AttachmentResourceLoader.isSISReportDetailResourcePath(reportFilePath)) {
+  			String detailPath = "";
+  			String uuIDPIP = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+  					"select "
+  					+ "    pip.ad_pinstance_para_uu "
+  					+ "from ad_pinstance_para pip "
+  					+ "where pip.ad_pinstance_id = ? "
+  					+ "and pip.parametername = 'SIS_ProcessDetailReport_ID' ", processInfo.getAD_PInstance_ID());
+  			MPInstancePara pip = new MPInstancePara(Env.getCtx(), uuIDPIP, processInfo.getTransactionName());
+  			int recordID = pip.getP_Number().intValue();
+  			detailPath = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+  					"select "
+  					+ "    jasperreport "
+  					+ "from sis_processdetailreport "
+  					+ "where sis_processdetailreport_id = ? ", recordID);
+  			if (detailPath == null || detailPath.equalsIgnoreCase("")) {
+  				throw new AdempiereException("jasper report name not found!");
+  			}
+  			reportFilePath = detailPath;
+  		} 
+  		////////////////////////////
+  		
         String[] reportPathList = reportFilePath.split(";");
 	    for (String reportPath : reportPathList) {
 	        if (Util.isEmpty(reportPath, true))
@@ -946,7 +973,9 @@ public class ReportStarter implements ProcessCall, ClientProcess
 		//[SIS] - Multi Report
 		////////////////////////////
 		else if (AttachmentResourceLoader.isSISReportDetailResourcePath(reportPath)) {
-			report = getAttachmentResourceLoader().getReportFile(processInfo, reportPath);
+			if (!ClassResourceLoader.isClassResourcePath(reportPath)) {
+				report = getAttachmentResourceLoader().getReportFile(processInfo, reportPath);
+			}
 		} 
 		////////////////////////////
 		

@@ -261,7 +261,7 @@ public class MBankStatement extends X_C_BankStatement implements DocAction
 			setC_DocType_ID(MDocType.getDocType(MDocType.DOCBASETYPE_BankStatement));
 		}
 		// Set beginning balance
-		if (! isProcessed() && getBeginningBalance().compareTo(Env.ZERO) == 0)
+		if (! isProcessed() && getBeginningBalance().compareTo(Env.ZERO) == 0 && get_ID() <= 0)
 		{
 			MBankAccount ba = getBankAccount();
 			ba.load(get_TrxName());

@@ -678,7 +678,10 @@ public class MJournal extends X_GL_Journal implements DocAction
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			if (this.getProcessedOn().signum() == 0) {
 				setDateDoc(TimeUtil.getDay(0));
 				if (getDateAcct().before(getDateDoc())) {
@@ -687,7 +690,10 @@ public class MJournal extends X_GL_Journal implements DocAction
 				}
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			if (this.getProcessedOn().signum() == 0) {
 				String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 				if (value != null)

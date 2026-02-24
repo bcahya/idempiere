@@ -1952,7 +1952,11 @@ public class MPayment extends X_C_Payment
 					setC_Invoice_ID (invoices[length-1].getC_Invoice_ID());
 				//
 				MDocType orderDocType = MDocType.get(getCtx(), order.getC_DocType_ID());
-				if (orderDocType.isAutoGenerateInvoice() && getC_Invoice_ID() == 0)
+				if (
+//						orderDocType.isAutoGenerateInvoice() 
+						(orderDocType.isAutoGenerateInvoice() 
+								&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) //SIS exept System01
+						&& getC_Invoice_ID() == 0)
 				{
 					m_processMsg = "@NotFound@ @C_Invoice_ID@";
 					return DocAction.STATUS_Invalid;
@@ -2172,14 +2176,20 @@ public class MPayment extends X_C_Payment
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			setDateTrx(TimeUtil.getDay(0));
 			if (getDateAcct().before(getDateTrx())) {
 				setDateAcct(getDateTrx());
 				MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			if (this.getProcessedOn().signum() == 0) {
 				String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 				if (value != null)
@@ -2293,69 +2303,72 @@ public class MPayment extends X_C_Payment
 	 */
 	public boolean allocateIt()
 	{
-		//	Create invoice Allocation
-		if (getC_Invoice_ID() != 0)
-		{	
-			return allocateInvoice();
-		}	
-		//	Invoices of a AP Payment Selection
-		if (allocatePaySelection())
-			return true;
-		
-		if (getC_Order_ID() != 0)
-			return false;
+		if (!MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) { //SIS exept System01
+			//	Create invoice Allocation
+			if (getC_Invoice_ID() != 0)
+			{	
+				return allocateInvoice();
+			}	
+			//	Invoices of a AP Payment Selection
+			if (allocatePaySelection())
+				return true;
 			
-		//	Allocate to multiple Payments based on entry
-		MPaymentAllocate[] pAllocs = MPaymentAllocate.get(this);
-		if (pAllocs.length == 0)
-			return false;
-		
-		MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
-			getDateTrx(), getC_Currency_ID(), 
-				Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + getDocumentNo(), 
-				get_TrxName());
-		alloc.setAD_Org_ID(getAD_Org_ID());
-		alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment; IDEMPIERE-1532 tbayen
-		if (!alloc.save())
-		{
-			log.severe("P.Allocations not created");
-			return false;
-		}
-		//	Lines
-		for (int i = 0; i < pAllocs.length; i++)
-		{
-			MPaymentAllocate pa = pAllocs[i];
-
-			BigDecimal allocationAmt = pa.getAmount();			//	underpayment
-			if (pa.getOverUnderAmt().signum() < 0 && pa.getAmount().signum() > 0)
-				allocationAmt = allocationAmt.add(pa.getOverUnderAmt());	//	overpayment (negative)
-
-			MAllocationLine aLine = null;
-			if (isReceipt())
-				aLine = new MAllocationLine (alloc, allocationAmt,
-					pa.getDiscountAmt(), pa.getWriteOffAmt(), pa.getOverUnderAmt());
-			else
-				aLine = new MAllocationLine (alloc, allocationAmt.negate(),
-					pa.getDiscountAmt().negate(), pa.getWriteOffAmt().negate(), pa.getOverUnderAmt().negate());
-			aLine.setDocInfo(pa.getC_BPartner_ID(), 0, pa.getC_Invoice_ID());
-			aLine.setPaymentInfo(getC_Payment_ID(), 0, getC_BankTransfer_ID());
-			if (!aLine.save(get_TrxName()))
-				log.warning("P.Allocations - line not saved");
-			else
+			if (getC_Order_ID() != 0)
+				return false;
+				
+			//	Allocate to multiple Payments based on entry
+			MPaymentAllocate[] pAllocs = MPaymentAllocate.get(this);
+			if (pAllocs.length == 0)
+				return false;
+			
+			MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
+				getDateTrx(), getC_Currency_ID(), 
+					Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + getDocumentNo(), 
+					get_TrxName());
+			alloc.setAD_Org_ID(getAD_Org_ID());
+			alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment; IDEMPIERE-1532 tbayen
+			if (!alloc.save())
 			{
-				pa.setC_AllocationLine_ID(aLine.getC_AllocationLine_ID());
-				pa.saveEx();
+				log.severe("P.Allocations not created");
+				return false;
 			}
+			//	Lines
+			for (int i = 0; i < pAllocs.length; i++)
+			{
+				MPaymentAllocate pa = pAllocs[i];
+	
+				BigDecimal allocationAmt = pa.getAmount();			//	underpayment
+				if (pa.getOverUnderAmt().signum() < 0 && pa.getAmount().signum() > 0)
+					allocationAmt = allocationAmt.add(pa.getOverUnderAmt());	//	overpayment (negative)
+	
+				MAllocationLine aLine = null;
+				if (isReceipt())
+					aLine = new MAllocationLine (alloc, allocationAmt,
+						pa.getDiscountAmt(), pa.getWriteOffAmt(), pa.getOverUnderAmt());
+				else
+					aLine = new MAllocationLine (alloc, allocationAmt.negate(),
+						pa.getDiscountAmt().negate(), pa.getWriteOffAmt().negate(), pa.getOverUnderAmt().negate());
+				aLine.setDocInfo(pa.getC_BPartner_ID(), 0, pa.getC_Invoice_ID());
+				aLine.setPaymentInfo(getC_Payment_ID(), 0, getC_BankTransfer_ID());
+				if (!aLine.save(get_TrxName()))
+					log.warning("P.Allocations - line not saved");
+				else
+				{
+					pa.setC_AllocationLine_ID(aLine.getC_AllocationLine_ID());
+					pa.saveEx();
+				}
+			}
+			//do not post immediate alloc, alloc should post after payment
+			alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
+			// added AdempiereException by zuhri
+			if (!alloc.processIt(DocAction.ACTION_Complete))
+				throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
+			addDocsPostProcess(alloc);
+			// end added
+			m_processMsg = "@C_AllocationHdr_ID@: " + alloc.getDocumentNo();
+			return alloc.save(get_TrxName());
 		}
-		//do not post immediate alloc, alloc should post after payment
-		alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
-		// added AdempiereException by zuhri
-		if (!alloc.processIt(DocAction.ACTION_Complete))
-			throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
-		addDocsPostProcess(alloc);
-		// end added
-		m_processMsg = "@C_AllocationHdr_ID@: " + alloc.getDocumentNo();
-		return alloc.save(get_TrxName());
+		return true;
 	}	//	allocateIt
 
 	/**
@@ -2364,50 +2377,52 @@ public class MPayment extends X_C_Payment
 	 */
 	protected boolean allocateInvoice()
 	{
-		//	calculate actual allocation
-		BigDecimal allocationAmt = getPayAmt();			//	underpayment
-		if (getOverUnderAmt().signum() < 0 && getPayAmt().signum() > 0)
-			allocationAmt = allocationAmt.add(getOverUnderAmt());	//	overpayment (negative)
-
-		MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
-			getDateTrx(), getC_Currency_ID(),
-			Msg.translate(getCtx(), "C_Payment_ID") + ": " + getDocumentNo() + " [1]", get_TrxName());
-		alloc.setAD_Org_ID(getAD_Org_ID());
-		alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment
-		MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
-		if (invoice.getDateAcct().after(alloc.getDateAcct())) {
-			alloc.setDateAcct(invoice.getDateAcct());
+		if (!MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) { //SIS exept System01
+			//	calculate actual allocation
+			BigDecimal allocationAmt = getPayAmt();			//	underpayment
+			if (getOverUnderAmt().signum() < 0 && getPayAmt().signum() > 0)
+				allocationAmt = allocationAmt.add(getOverUnderAmt());	//	overpayment (negative)
+	
+			MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
+				getDateTrx(), getC_Currency_ID(),
+				Msg.translate(getCtx(), "C_Payment_ID") + ": " + getDocumentNo() + " [1]", get_TrxName());
+			alloc.setAD_Org_ID(getAD_Org_ID());
+			alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment
+			MInvoice invoice = new MInvoice(getCtx(), getC_Invoice_ID(), get_TrxName());
+			if (invoice.getDateAcct().after(alloc.getDateAcct())) {
+				alloc.setDateAcct(invoice.getDateAcct());
+			}
+			alloc.saveEx();
+			MAllocationLine aLine = null;
+			if (isReceipt())
+				aLine = new MAllocationLine (alloc, allocationAmt, 
+					getDiscountAmt(), getWriteOffAmt(), getOverUnderAmt());
+			else
+				aLine = new MAllocationLine (alloc, allocationAmt.negate(), 
+					getDiscountAmt().negate(), getWriteOffAmt().negate(), getOverUnderAmt().negate());
+			aLine.setDocInfo(getC_BPartner_ID(), 0, getC_Invoice_ID());
+			aLine.setC_Payment_ID(getC_Payment_ID());
+			aLine.saveEx(get_TrxName());
+			//do not post immediate alloc
+			alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
+			// added AdempiereException by zuhri
+			if (!alloc.processIt(DocAction.ACTION_Complete))
+				throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
+			addDocsPostProcess(alloc);
+			// end added
+			alloc.saveEx(get_TrxName());
+			m_justCreatedAllocInv = alloc;
+			m_processMsg = "@C_AllocationHdr_ID@: " + alloc.getDocumentNo();
+				
+			//	Get Project from Invoice
+			int C_Project_ID = DB.getSQLValue(get_TrxName(), 
+				"SELECT MAX(C_Project_ID) FROM C_Invoice WHERE C_Invoice_ID=?", getC_Invoice_ID());
+			if (C_Project_ID > 0 && getC_Project_ID() == 0)
+				setC_Project_ID(C_Project_ID);
+			else if (C_Project_ID > 0 && getC_Project_ID() > 0 && C_Project_ID != getC_Project_ID())
+				log.warning("Invoice C_Project_ID=" + C_Project_ID 
+					+ " <> Payment C_Project_ID=" + getC_Project_ID());
 		}
-		alloc.saveEx();
-		MAllocationLine aLine = null;
-		if (isReceipt())
-			aLine = new MAllocationLine (alloc, allocationAmt, 
-				getDiscountAmt(), getWriteOffAmt(), getOverUnderAmt());
-		else
-			aLine = new MAllocationLine (alloc, allocationAmt.negate(), 
-				getDiscountAmt().negate(), getWriteOffAmt().negate(), getOverUnderAmt().negate());
-		aLine.setDocInfo(getC_BPartner_ID(), 0, getC_Invoice_ID());
-		aLine.setC_Payment_ID(getC_Payment_ID());
-		aLine.saveEx(get_TrxName());
-		//do not post immediate alloc
-		alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
-		// added AdempiereException by zuhri
-		if (!alloc.processIt(DocAction.ACTION_Complete))
-			throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
-		addDocsPostProcess(alloc);
-		// end added
-		alloc.saveEx(get_TrxName());
-		m_justCreatedAllocInv = alloc;
-		m_processMsg = "@C_AllocationHdr_ID@: " + alloc.getDocumentNo();
-			
-		//	Get Project from Invoice
-		int C_Project_ID = DB.getSQLValue(get_TrxName(), 
-			"SELECT MAX(C_Project_ID) FROM C_Invoice WHERE C_Invoice_ID=?", getC_Invoice_ID());
-		if (C_Project_ID > 0 && getC_Project_ID() == 0)
-			setC_Project_ID(C_Project_ID);
-		else if (C_Project_ID > 0 && getC_Project_ID() > 0 && C_Project_ID != getC_Project_ID())
-			log.warning("Invoice C_Project_ID=" + C_Project_ID 
-				+ " <> Payment C_Project_ID=" + getC_Project_ID());
 		return true;
 	}	//	allocateInvoice
 	
@@ -2417,90 +2432,93 @@ public class MPayment extends X_C_Payment
 	 */
 	protected boolean allocatePaySelection()
 	{
-		MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
-			getDateTrx(), getC_Currency_ID(),
-			Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + getDocumentNo() + " [n]", get_TrxName());
-		alloc.setAD_Org_ID(getAD_Org_ID());
-		alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment
-		
-		String sql = "SELECT psc.C_BPartner_ID, psl.C_Invoice_ID, psl.IsSOTrx, "	//	1..3
-			+ " psl.PayAmt, psl.DiscountAmt, psl.DifferenceAmt, psl.OpenAmt, psl.WriteOffAmt "  // 4..8
-			+ "FROM C_PaySelectionLine psl"
-			+ " INNER JOIN C_PaySelectionCheck psc ON (psl.C_PaySelectionCheck_ID=psc.C_PaySelectionCheck_ID) "
-			+ "WHERE psc.C_Payment_ID=?";
-		PreparedStatement pstmt = null;
-		ResultSet rs = null;
-		try
-		{
-			pstmt = DB.prepareStatement(sql, get_TrxName());
-			pstmt.setInt(1, getC_Payment_ID());
-			rs = pstmt.executeQuery();
-			while (rs.next())
+		if (!MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) { //SIS exept System01
+			MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
+				getDateTrx(), getC_Currency_ID(),
+				Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + getDocumentNo() + " [n]", get_TrxName());
+			alloc.setAD_Org_ID(getAD_Org_ID());
+			alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment
+			
+			String sql = "SELECT psc.C_BPartner_ID, psl.C_Invoice_ID, psl.IsSOTrx, "	//	1..3
+				+ " psl.PayAmt, psl.DiscountAmt, psl.DifferenceAmt, psl.OpenAmt, psl.WriteOffAmt "  // 4..8
+				+ "FROM C_PaySelectionLine psl"
+				+ " INNER JOIN C_PaySelectionCheck psc ON (psl.C_PaySelectionCheck_ID=psc.C_PaySelectionCheck_ID) "
+				+ "WHERE psc.C_Payment_ID=?";
+			PreparedStatement pstmt = null;
+			ResultSet rs = null;
+			try
 			{
-				int C_BPartner_ID = rs.getInt(1);
-				int C_Invoice_ID = rs.getInt(2);
-				if (C_BPartner_ID == 0 && C_Invoice_ID == 0)
-					continue;
-				boolean isSOTrx = "Y".equals(rs.getString(3));
-				BigDecimal PayAmt = rs.getBigDecimal(4);
-				BigDecimal DiscountAmt = rs.getBigDecimal(5);
-				BigDecimal WriteOffAmt = rs.getBigDecimal(8);
-				BigDecimal OpenAmt = rs.getBigDecimal(7);
-				BigDecimal OverUnderAmt = OpenAmt.subtract(PayAmt)
-					.subtract(DiscountAmt).subtract(WriteOffAmt);
-				//
-				if (alloc.get_ID() == 0 && !alloc.save(get_TrxName()))
+				pstmt = DB.prepareStatement(sql, get_TrxName());
+				pstmt.setInt(1, getC_Payment_ID());
+				rs = pstmt.executeQuery();
+				while (rs.next())
 				{
-					log.log(Level.SEVERE, "Could not create Allocation Hdr");
-					return false;
+					int C_BPartner_ID = rs.getInt(1);
+					int C_Invoice_ID = rs.getInt(2);
+					if (C_BPartner_ID == 0 && C_Invoice_ID == 0)
+						continue;
+					boolean isSOTrx = "Y".equals(rs.getString(3));
+					BigDecimal PayAmt = rs.getBigDecimal(4);
+					BigDecimal DiscountAmt = rs.getBigDecimal(5);
+					BigDecimal WriteOffAmt = rs.getBigDecimal(8);
+					BigDecimal OpenAmt = rs.getBigDecimal(7);
+					BigDecimal OverUnderAmt = OpenAmt.subtract(PayAmt)
+						.subtract(DiscountAmt).subtract(WriteOffAmt);
+					//
+					if (alloc.get_ID() == 0 && !alloc.save(get_TrxName()))
+					{
+						log.log(Level.SEVERE, "Could not create Allocation Hdr");
+						return false;
+					}
+					MAllocationLine aLine = null;
+					if (isSOTrx)
+						aLine = new MAllocationLine (alloc, PayAmt, 
+							DiscountAmt, WriteOffAmt, OverUnderAmt);
+					else
+						aLine = new MAllocationLine (alloc, PayAmt.negate(), 
+							DiscountAmt.negate(), WriteOffAmt.negate(), OverUnderAmt.negate());
+					aLine.setDocInfo(C_BPartner_ID, 0, C_Invoice_ID);
+					aLine.setC_Payment_ID(getC_Payment_ID());
+					if (!aLine.save(get_TrxName()))
+						log.log(Level.SEVERE, "Could not create Allocation Line");
 				}
-				MAllocationLine aLine = null;
-				if (isSOTrx)
-					aLine = new MAllocationLine (alloc, PayAmt, 
-						DiscountAmt, WriteOffAmt, OverUnderAmt);
-				else
-					aLine = new MAllocationLine (alloc, PayAmt.negate(), 
-						DiscountAmt.negate(), WriteOffAmt.negate(), OverUnderAmt.negate());
-				aLine.setDocInfo(C_BPartner_ID, 0, C_Invoice_ID);
-				aLine.setC_Payment_ID(getC_Payment_ID());
-				if (!aLine.save(get_TrxName()))
-					log.log(Level.SEVERE, "Could not create Allocation Line");
 			}
-		}
-		catch (Exception e)
-		{
-			log.log(Level.SEVERE, "allocatePaySelection", e);
-		}
-		finally
-		{
-			DB.close(rs, pstmt);
-			rs = null;
-			pstmt = null;
-		}
-		
-		//	Should start WF
-		boolean ok = true;
-		if (alloc.get_ID() == 0)
-		{
-			if (log.isLoggable(Level.FINE)) log.fine("No Allocation created - C_Payment_ID=" 
-				+ getC_Payment_ID());
-			ok = false;
-		}
-		else
-		{
-			//do not post immediate alloc
-			alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
-			// added Adempiere Exception by zuhri
-			if (alloc.processIt(DocAction.ACTION_Complete)) {
-				addDocsPostProcess(alloc);
-				ok = alloc.save(get_TrxName());
-			} else {
-				throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
+			catch (Exception e)
+			{
+				log.log(Level.SEVERE, "allocatePaySelection", e);
 			}
-			// end added by zuhri
-			m_processMsg = "@C_AllocationHdr_ID@: " + alloc.getDocumentNo();
+			finally
+			{
+				DB.close(rs, pstmt);
+				rs = null;
+				pstmt = null;
+			}
+			
+			//	Should start WF
+			boolean ok = true;
+			if (alloc.get_ID() == 0)
+			{
+				if (log.isLoggable(Level.FINE)) log.fine("No Allocation created - C_Payment_ID=" 
+					+ getC_Payment_ID());
+				ok = false;
+			}
+			else
+			{
+				//do not post immediate alloc
+				alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
+				// added Adempiere Exception by zuhri
+				if (alloc.processIt(DocAction.ACTION_Complete)) {
+					addDocsPostProcess(alloc);
+					ok = alloc.save(get_TrxName());
+				} else {
+					throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
+				}
+				// end added by zuhri
+				m_processMsg = "@C_AllocationHdr_ID@: " + alloc.getDocumentNo();
+			}
+			return ok;
 		}
-		return ok;
+		return true;
 	}	//	allocatePaySelection
 	
 	/**
@@ -2792,40 +2810,41 @@ public class MPayment extends X_C_Payment
 		StringBuilder info = new StringBuilder(reversal.getDocumentNo());
 
 		//	Create automatic Allocation
-		MAllocationHdr alloc = new MAllocationHdr (getCtx(), false, 
-			getDateTrx(), 
-			getC_Currency_ID(),
-			Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + reversal.getDocumentNo(), get_TrxName());
-		alloc.setAD_Org_ID(getAD_Org_ID());
-		alloc.setDateAcct(dateAcct); // dateAcct variable already take into account the accrual parameter
-		alloc.saveEx(get_TrxName());
-
-		//	Original Allocation
-		MAllocationLine aLine = new MAllocationLine (alloc, getPayAmt(true), 
-			Env.ZERO, Env.ZERO, Env.ZERO);
-		aLine.setDocInfo(getC_BPartner_ID(), 0, 0);
-		aLine.setPaymentInfo(getC_Payment_ID(), 0);
-		if (!aLine.save(get_TrxName()))
-			log.warning("Automatic allocation - line not saved");
-		//	Reversal Allocation
-		aLine = new MAllocationLine (alloc, reversal.getPayAmt(true), 
-			Env.ZERO, Env.ZERO, Env.ZERO);
-		aLine.setDocInfo(reversal.getC_BPartner_ID(), 0, 0);
-		aLine.setPaymentInfo(reversal.getC_Payment_ID(), 0, reversal.getC_BankTransfer_ID());
-		if (!aLine.save(get_TrxName()))
-			log.warning("Automatic allocation - reversal line not saved");
-		
-		//do not post immediate alloc
-		alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
-		// added AdempiereException by zuhri
-		if (!alloc.processIt(DocAction.ACTION_Complete))
-			throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
-		addDocsPostProcess(alloc);
-		// end added
-		alloc.saveEx(get_TrxName());
-		//			
-		info.append(" - @C_AllocationHdr_ID@: ").append(alloc.getDocumentNo());
-		
+		if (!MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) { //SIS exept System01
+			MAllocationHdr alloc = new MAllocationHdr (getCtx(), false, 
+				getDateTrx(), 
+				getC_Currency_ID(),
+				Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + reversal.getDocumentNo(), get_TrxName());
+			alloc.setAD_Org_ID(getAD_Org_ID());
+			alloc.setDateAcct(dateAcct); // dateAcct variable already take into account the accrual parameter
+			alloc.saveEx(get_TrxName());
+	
+			//	Original Allocation
+			MAllocationLine aLine = new MAllocationLine (alloc, getPayAmt(true), 
+				Env.ZERO, Env.ZERO, Env.ZERO);
+			aLine.setDocInfo(getC_BPartner_ID(), 0, 0);
+			aLine.setPaymentInfo(getC_Payment_ID(), 0);
+			if (!aLine.save(get_TrxName()))
+				log.warning("Automatic allocation - line not saved");
+			//	Reversal Allocation
+			aLine = new MAllocationLine (alloc, reversal.getPayAmt(true), 
+				Env.ZERO, Env.ZERO, Env.ZERO);
+			aLine.setDocInfo(reversal.getC_BPartner_ID(), 0, 0);
+			aLine.setPaymentInfo(reversal.getC_Payment_ID(), 0, reversal.getC_BankTransfer_ID());
+			if (!aLine.save(get_TrxName()))
+				log.warning("Automatic allocation - reversal line not saved");
+			
+			//do not post immediate alloc
+			alloc.set_Attribute(DocumentEngine.DOCUMENT_POST_IMMEDIATE_AFTER_COMPLETE, Boolean.FALSE);
+			// added AdempiereException by zuhri
+			if (!alloc.processIt(DocAction.ACTION_Complete))
+				throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
+			addDocsPostProcess(alloc);
+			// end added
+			alloc.saveEx(get_TrxName());
+			//			
+			info.append(" - @C_AllocationHdr_ID@: ").append(alloc.getDocumentNo());
+		}
 		ICreditManager creditManager = Core.getCreditManager(this);
 		//	Update BPartner
 		if (creditManager != null)

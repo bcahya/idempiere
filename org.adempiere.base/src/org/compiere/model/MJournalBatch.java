@@ -518,14 +518,20 @@ public class MJournalBatch extends X_GL_JournalBatch implements DocAction
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			setDateDoc(TimeUtil.getDay(0));
 			if (getDateAcct().before(getDateDoc())) {
 				setDateAcct(getDateDoc());
 				MPeriod.testPeriodOpen(getCtx(), getDateAcct(), getC_DocType_ID(), getAD_Org_ID());
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 			if (value != null)
 				setDocumentNo(value);

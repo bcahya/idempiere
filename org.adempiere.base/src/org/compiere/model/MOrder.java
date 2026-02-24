@@ -2174,7 +2174,11 @@ public class MOrder extends X_C_Order implements DocAction
 		if (MDocType.DOCSUBTYPESO_OnCreditOrder.equals(DocSubTypeSO)		//	(W)illCall(I)nvoice
 			|| MDocType.DOCSUBTYPESO_WarehouseOrder.equals(DocSubTypeSO)	//	(W)illCall(P)ickup	
 			|| MDocType.DOCSUBTYPESO_POSOrder.equals(DocSubTypeSO)			//	(W)alkIn(R)eceipt
-			|| (MDocType.DOCSUBTYPESO_PrepayOrder.equals(DocSubTypeSO) && dt.isAutoGenerateInout())) 
+			|| (MDocType.DOCSUBTYPESO_PrepayOrder.equals(DocSubTypeSO) && 
+//					dt.isAutoGenerateInout()
+					(dt.isAutoGenerateInout() 
+							&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) //SIS exept System01
+					)) 
 		{
 			if (!DELIVERYRULE_Force.equals(getDeliveryRule()))
 			{
@@ -2196,7 +2200,11 @@ public class MOrder extends X_C_Order implements DocAction
 		//	Create SO Invoice - Always invoice complete Order
 		if ( MDocType.DOCSUBTYPESO_POSOrder.equals(DocSubTypeSO)
 			|| MDocType.DOCSUBTYPESO_OnCreditOrder.equals(DocSubTypeSO) 	
-			|| (MDocType.DOCSUBTYPESO_PrepayOrder.equals(DocSubTypeSO) && dt.isAutoGenerateInvoice())) 
+			|| (MDocType.DOCSUBTYPESO_PrepayOrder.equals(DocSubTypeSO) 
+//					&& dt.isAutoGenerateInvoice()
+					&& (dt.isAutoGenerateInvoice() 
+							&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) //SIS exept System01
+					)) 
 		{
 			MInvoice invoice = createInvoice (dt, shipment, realTimePOS ? null : getDateOrdered());
 			if (invoice == null)
@@ -2390,7 +2398,10 @@ public class MOrder extends X_C_Order implements DocAction
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			/* a42niem - BF IDEMPIERE-63 - check if document has been completed before */ 
 			if (this.getProcessedOn().signum() == 0) {
 				setDateOrdered(TimeUtil.getDay(0));
@@ -2400,7 +2411,10 @@ public class MOrder extends X_C_Order implements DocAction
 				}
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			/* a42niem - BF IDEMPIERE-63 - check if document has been completed before */ 
 			if (this.getProcessedOn().signum() == 0) {
 				String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);

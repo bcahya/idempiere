@@ -2323,7 +2323,10 @@ public class MInOut extends X_M_InOut implements DocAction, IDocsPostProcess
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			setMovementDate(TimeUtil.getDay(0));
 			if (getDateAcct().before(getMovementDate())) {
 				setDateAcct(getMovementDate());
@@ -2331,7 +2334,10 @@ public class MInOut extends X_M_InOut implements DocAction, IDocsPostProcess
 				MAcctSchema.testBackDateTrxAllowed(getCtx(), getDateAcct(), get_TrxName());
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 			if (value != null)
 				setDocumentNo(value);

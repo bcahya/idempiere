@@ -2367,7 +2367,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 			return;
 
 		MDocType dt = MDocType.get(getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			setDateInvoiced(TimeUtil.getDay(0));
 			if (getDateAcct().before(getDateInvoiced())) {
 				setDateAcct(getDateInvoiced());
@@ -2375,7 +2378,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 				MAcctSchema.testBackDateTrxAllowed(getCtx(), getDateAcct(), get_TrxName());
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 			if (value != null)
 				setDocumentNo(value);
@@ -2777,32 +2783,33 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 
 		//	Create Allocation
 		StringBuilder msgall = new StringBuilder().append(Msg.translate(getCtx(), "C_Invoice_ID")).append(": ").append(getDocumentNo()).append("/").append(reversal.getDocumentNo());
-		MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, reversalDate,
-			getC_Currency_ID(),
-			msgall.toString(),
-			get_TrxName());
-		alloc.setAD_Org_ID(getAD_Org_ID());
-		alloc.saveEx();
-		//	Amount
-		BigDecimal gt = getGrandTotal(true);
-		if (!isSOTrx())
-			gt = gt.negate();
-		//	Orig Line
-		MAllocationLine aLine = new MAllocationLine (alloc, gt,
-				Env.ZERO, Env.ZERO, Env.ZERO);
-		aLine.setC_Invoice_ID(getC_Invoice_ID());
-		aLine.saveEx();
-		//	Reversal Line
-		MAllocationLine rLine = new MAllocationLine (alloc, gt.negate(),
-				Env.ZERO, Env.ZERO, Env.ZERO);
-		rLine.setC_Invoice_ID(reversal.getC_Invoice_ID());
-		rLine.saveEx();
-		// added AdempiereException by zuhri
-		if (!alloc.processIt(DocAction.ACTION_Complete))
-			throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
-		// end added
-		alloc.saveEx();
-		
+		if (!MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) { //SIS exept System01
+			MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, reversalDate,
+				getC_Currency_ID(),
+				msgall.toString(),
+				get_TrxName());
+			alloc.setAD_Org_ID(getAD_Org_ID());
+			alloc.saveEx();
+			//	Amount
+			BigDecimal gt = getGrandTotal(true);
+			if (!isSOTrx())
+				gt = gt.negate();
+			//	Orig Line
+			MAllocationLine aLine = new MAllocationLine (alloc, gt,
+					Env.ZERO, Env.ZERO, Env.ZERO);
+			aLine.setC_Invoice_ID(getC_Invoice_ID());
+			aLine.saveEx();
+			//	Reversal Line
+			MAllocationLine rLine = new MAllocationLine (alloc, gt.negate(),
+					Env.ZERO, Env.ZERO, Env.ZERO);
+			rLine.setC_Invoice_ID(reversal.getC_Invoice_ID());
+			rLine.saveEx();
+			// added AdempiereException by zuhri
+			if (!alloc.processIt(DocAction.ACTION_Complete))
+				throw new AdempiereException(Msg.getMsg(getCtx(), "FailedProcessingDocument") + " - " + alloc.getProcessMsg());
+			// end added
+			alloc.saveEx();
+		}
 		return reversal;
 	}
 

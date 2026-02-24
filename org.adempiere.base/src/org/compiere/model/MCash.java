@@ -502,33 +502,36 @@ public class MCash extends X_C_Cash implements DocAction
 				//
 				StringBuilder name = new StringBuilder().append(Msg.translate(getCtx(), "C_Cash_ID")).append(": ").append(getName())
 										.append(" - ").append(Msg.translate(getCtx(), "Line")).append(" ").append(line.getLine());
-				MAllocationHdr hdr = new MAllocationHdr(getCtx(), false, 
-						getDateAcct(), line.getC_Currency_ID(),
-						name.toString(), get_TrxName());
-				hdr.setAD_Org_ID(getAD_Org_ID());
-				if (!hdr.save())
-				{
-					m_processMsg = CLogger.retrieveErrorString("Could not create Allocation Hdr");
-					return DocAction.STATUS_Invalid;
-				}
-				//	Allocation Line
-				MAllocationLine aLine = new MAllocationLine (hdr, line.getAmount(),
-					line.getDiscountAmt(), line.getWriteOffAmt(), Env.ZERO);
-				aLine.setC_Invoice_ID(line.getC_Invoice_ID());
-				aLine.setC_CashLine_ID(line.getC_CashLine_ID());
-				if (!aLine.save())
-				{
-					m_processMsg = CLogger.retrieveErrorString("Could not create Allocation Line");
-					return DocAction.STATUS_Invalid;
-				}
-				//	Should start WF
-				if(!hdr.processIt(DocAction.ACTION_Complete)) {
-					m_processMsg = CLogger.retrieveErrorString("Could not process Allocation");
-					return DocAction.STATUS_Invalid;
-				}
-				if (!hdr.save()) {
-					m_processMsg = CLogger.retrieveErrorString("Could not save Allocation");
-					return DocAction.STATUS_Invalid;
+				
+				if (!MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) { //SIS exept System01
+					MAllocationHdr hdr = new MAllocationHdr(getCtx(), false, 
+							getDateAcct(), line.getC_Currency_ID(),
+							name.toString(), get_TrxName());
+					hdr.setAD_Org_ID(getAD_Org_ID());
+					if (!hdr.save())
+					{
+						m_processMsg = CLogger.retrieveErrorString("Could not create Allocation Hdr");
+						return DocAction.STATUS_Invalid;
+					}
+					//	Allocation Line
+					MAllocationLine aLine = new MAllocationLine (hdr, line.getAmount(),
+						line.getDiscountAmt(), line.getWriteOffAmt(), Env.ZERO);
+					aLine.setC_Invoice_ID(line.getC_Invoice_ID());
+					aLine.setC_CashLine_ID(line.getC_CashLine_ID());
+					if (!aLine.save())
+					{
+						m_processMsg = CLogger.retrieveErrorString("Could not create Allocation Line");
+						return DocAction.STATUS_Invalid;
+					}
+					//	Should start WF
+					if(!hdr.processIt(DocAction.ACTION_Complete)) {
+						m_processMsg = CLogger.retrieveErrorString("Could not process Allocation");
+						return DocAction.STATUS_Invalid;
+					}
+					if (!hdr.save()) {
+						m_processMsg = CLogger.retrieveErrorString("Could not save Allocation");
+						return DocAction.STATUS_Invalid;
+					}
 				}
 			}
 			else if (MCashLine.CASHTYPE_BankAccountTransfer.equals(line.getCashType()))

@@ -227,14 +227,20 @@ public class MProduction extends X_M_Production implements DocAction {
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteDateOnComplete()) {
+//		if (dt.isOverwriteDateOnComplete()) {
+		if (dt.isOverwriteDateOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			if (this.getProcessedOn().signum() == 0) {
 				setMovementDate(TimeUtil.getDay(0));
 				MPeriod.testPeriodOpen(getCtx(), getMovementDate(), getC_DocType_ID(), getAD_Org_ID());
 				MAcctSchema.testBackDateTrxAllowed(getCtx(), getMovementDate(), get_TrxName());
 			}
 		}
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			if (this.getProcessedOn().signum() == 0) {
 				String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 				if (value != null)

@@ -485,7 +485,10 @@ public class MRMA extends X_M_RMA implements DocAction
 	 */
 	protected void setDefiniteDocumentNo() {
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
-		if (dt.isOverwriteSeqOnComplete()) {
+//		if (dt.isOverwriteSeqOnComplete()) {
+		if (dt.isOverwriteSeqOnComplete() 
+				&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx())) //SIS exept System01
+			) {
 			String value = DB.getDocumentNo(getC_DocType_ID(), get_TrxName(), true, this);
 			if (value != null)
 				setDocumentNo(value);

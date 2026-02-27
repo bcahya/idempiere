@@ -438,7 +438,8 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction
 					.setClient_ID()
 					.setParameters(line.getC_Invoice_ID(), "Y", X_C_Invoice.DOCSTATUS_Voided, X_C_Invoice.DOCSTATUS_Reversed)
 					.match();
-					if (InvoiceIsPaid && line.getAmount().signum() > 0)
+					if (InvoiceIsPaid && line.getAmount().signum() > 0
+							&& !MSysConfig.getBooleanValue("SIS_SYSTEM_01", false, Env.getAD_Client_ID(Env.getCtx()))) //SIS exept System01)
 						throw new  AdempiereException("@ValidationError@ @C_Invoice_ID@ @IsPaid@");
 				}
 			}	

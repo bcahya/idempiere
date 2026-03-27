@@ -614,18 +614,21 @@ public class MProduction extends X_M_Production implements DocAction {
 			return DocAction.STATUS_Invalid; 
 		}
 
-		if (!isUseProductionPlan()) {
-			m_processMsg = validateEndProduct(getM_Product_ID());			
-			if (!Util.isEmpty(m_processMsg)) {
-				return DocAction.STATUS_Invalid;
-			}
-		} else {
-			Query planQuery = new Query(getCtx(), I_M_ProductionPlan.Table_Name, "M_ProductionPlan.M_Production_ID=?", get_TrxName());
-			List<MProductionPlan> plans = planQuery.setParameters(getM_Production_ID()).list();
-			for(MProductionPlan plan : plans) {
-				m_processMsg = validateEndProduct(plan.getM_Product_ID());
+		//[SIS] - ByPass check if from MO
+		if (get_ValueAsInt("SIS_MO_ID") <= 0 && getReversal_ID() == 0) {
+			if (!isUseProductionPlan()) {
+				m_processMsg = validateEndProduct(getM_Product_ID());			
 				if (!Util.isEmpty(m_processMsg)) {
 					return DocAction.STATUS_Invalid;
+				}
+			} else {
+				Query planQuery = new Query(getCtx(), I_M_ProductionPlan.Table_Name, "M_ProductionPlan.M_Production_ID=?", get_TrxName());
+				List<MProductionPlan> plans = planQuery.setParameters(getM_Production_ID()).list();
+				for(MProductionPlan plan : plans) {
+					m_processMsg = validateEndProduct(plan.getM_Product_ID());
+					if (!Util.isEmpty(m_processMsg)) {
+						return DocAction.STATUS_Invalid;
+					}
 				}
 			}
 		}

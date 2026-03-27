@@ -46,6 +46,7 @@ import org.adempiere.webui.desktop.IDesktop;
 import org.adempiere.webui.panel.ITabOnCloseHandler;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
+import org.adempiere.webui.util.Icon;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.MArchive;
 import org.compiere.model.MAttachment;
@@ -223,7 +224,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 		toolbar.appendChild(new Separator("vertical"));
 		bSendMail.setName("SendMail");  // ?? Msg
 		if (ThemeManager.isUseFontIconForImage())
-			bSendMail.setIconSclass("z-icon-SendMail");
+			bSendMail.setIconSclass(Icon.getIconSclass(Icon.SEND_MAIL));
 		else
 			bSendMail.setImage(ThemeManager.getThemeResource("images/SendMail24.png"));
 		bSendMail.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "SendMail")));
@@ -233,7 +234,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 		toolbar.appendChild(new Separator("vertical"));
 		bArchive.setName("Archive");
 		if (ThemeManager.isUseFontIconForImage())
-			bArchive.setIconSclass("z-icon-Archive");
+			bArchive.setIconSclass(Icon.getIconSclass(Icon.ARCHIVE));
 		else
 			bArchive.setImage(ThemeManager.getThemeResource("images/Archive24.png"));
 		bArchive.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Archive")));
@@ -246,7 +247,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 			toolbar.appendChild(new Separator("vertical"));
 			bAttachment.setName("Attachment");
 			if (ThemeManager.isUseFontIconForImage())
-				bAttachment.setIconSclass("z-icon-Attachment");
+				bAttachment.setIconSclass(Icon.getIconSclass(Icon.ATTACHMENT));
 			else
 				bAttachment.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 			bAttachment.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Attachment")));
@@ -258,7 +259,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 		{
 			bExport.setName("Export");
 			if (ThemeManager.isUseFontIconForImage())
-				bExport.setIconSclass("z-icon-Export");
+				bExport.setIconSclass(Icon.getIconSclass(Icon.EXPORT));
 			else
 				bExport.setImage(ThemeManager.getThemeResource("images/Export24.png"));
 			bExport.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Export")));
@@ -271,7 +272,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 			if (uploadServicesMap.size() > 0) {
 				bCloudUpload.setName("CloudUpload");
 				if (ThemeManager.isUseFontIconForImage())
-					bCloudUpload.setIconSclass("z-icon-FileImport");
+					bCloudUpload.setIconSclass(Icon.getIconSclass(Icon.FILE_IMPORT));
 				else
 					bCloudUpload.setImage(ThemeManager.getThemeResource("images/FileImport24.png"));
 				bCloudUpload.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "CloudUpload")));

@@ -308,10 +308,20 @@ public class ConfigOracle implements IDatabaseConfig
 		boolean pass = server != null && server.length() > 0;
 		String error = "Not correct: DB Server = " + server;
 		InetAddress databaseServer = null;
+		String databaseServerProtocol = "//";
+		String databaseServerName = null;
 		try
 		{
-			if (pass)
-				databaseServer = InetAddress.getByName(server);
+			if (pass) {
+				String s = server;
+				if (server.contains("://")) {
+					int idx = server.indexOf("://");
+					s = server.substring(idx+3);
+					databaseServerProtocol = server.substring(0, idx+3);
+				}
+				databaseServer = InetAddress.getByName(s);
+				databaseServerName = databaseServer.getHostName();
+			}
 		}
 		catch (Exception e)
 		{
@@ -321,8 +331,10 @@ public class ConfigOracle implements IDatabaseConfig
 		if (monitor != null)
 			monitor.update(new DBConfigStatus(DBConfigStatus.DATABASE_SERVER, "ErrorDatabaseServer",
 				pass, true, error));
+		if (!pass)
+			return error;
 		if (log.isLoggable(Level.INFO)) log.info("OK: Database Server = " + databaseServer);
-		data.setProperty(ConfigurationData.ADEMPIERE_DB_SERVER, databaseServer!=null ? databaseServer.getHostName() : null);
+		data.setProperty(ConfigurationData.ADEMPIERE_DB_SERVER, databaseServer!=null ? ((databaseServerProtocol.equals("//") ? "" : databaseServerProtocol) + databaseServerName) : null);
 		//store as lower case for better script level backward compatibility
 		data.setProperty(ConfigurationData.ADEMPIERE_DB_TYPE, data.getDatabaseType());
 		data.setProperty(ConfigurationData.ADEMPIERE_DB_PATH, data.getDatabaseType().toLowerCase());
@@ -357,12 +369,12 @@ public class ConfigOracle implements IDatabaseConfig
 		}
 		//
 		//	URL (derived)	jdbc:oracle:thin:@//prod1:1521/prod1
-		String url = "jdbc:oracle:thin:@//" + databaseServer.getHostName()
+		String url = "jdbc:oracle:thin:@" + databaseServerProtocol + databaseServerName
 			+ ":" + databasePort
 			+ "/" + databaseName;
 		pass = testJDBC(url, p_db.getSystemUser(), systemPassword);
 		error = "Error connecting: " + url
-			+ " - as "+ p_db.getSystemUser() + "/" + systemPassword;
+			+ " - as "+ p_db.getSystemUser() + "/********";
 		if (monitor != null)
 			monitor.update(new DBConfigStatus(DBConfigStatus.DATABASE_SYSTEM_PASSWORD, "ErrorJDBC",
 				pass, true, error));
@@ -392,7 +404,7 @@ public class ConfigOracle implements IDatabaseConfig
 			return error;
 		//	Ignore result as it might not be imported
 		pass = testJDBC(url, databaseUser, databasePassword);
-		error = "Cannot connect to User: " + databaseUser + "/" + databasePassword + " - Database may not be imported yet (OK on initial run).";
+		error = "Cannot connect to User: " + databaseUser + "/******** - Database may not be imported yet (OK on initial run).";
 		if (monitor != null) {
 			boolean critical = true;
 			if (!isDBExists) {
@@ -441,7 +453,7 @@ public class ConfigOracle implements IDatabaseConfig
 				dockerCmd = "docker exec -i " + oracleDockerContainer + " ";
 
 			String sqlplus = dockerCmd + "sqlplus " + p_db.getSystemUser() + "/" + systemPassword + "@"
-				+ "//" + databaseServer.getHostName()
+				+ databaseServerProtocol + databaseServerName
 				+ ":" + databasePort
 				+ "/" + databaseName;
 			log.config(sqlplus);

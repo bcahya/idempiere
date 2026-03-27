@@ -9,14 +9,22 @@ export ID_ENV=Server
 . ./myEnvironment.sh
 echo Import Reference - "$IDEMPIERE_HOME" \("$ADEMPIERE_DB_NAME"\)
 
-SUFFIX=""
-SYSUSER=system
-if [ "$ADEMPIERE_DB_PATH" = "postgresql" ]
-then
-   SUFFIX="_pg"
-   SYSUSER=postgres
+if [ -z "$ADEMPIERE_DB_SYSTEM_USER" ]; then
+    if [ "$ADEMPIERE_DB_PATH" = "postgresql" ]; then
+        ADEMPIERE_DB_SYSTEM_USER=postgres
+    else
+        ADEMPIERE_DB_SYSTEM_USER=SYSTEM
+    fi
 fi
 
+<<<<<<< HEAD
+=======
+SUFFIX=""
+if [ "$ADEMPIERE_DB_PATH" = "postgresql" ]; then
+    SUFFIX="_pg"
+fi
+
+>>>>>>> release-13
 echo Re-Create Reference User and import "$IDEMPIERE_HOME"/data/seed/Adempiere.dmp - \("$ADEMPIERE_DB_NAME"\)
 echo "== The import will show warnings. This is OK =="
 cd "$IDEMPIERE_HOME"/data/seed || exit
@@ -26,5 +34,5 @@ ls -lsa "$IDEMPIERE_HOME"/data/seed/Adempiere${SUFFIX}.dmp
 echo Press enter to continue ...
 read -r _
 
-# Parameter: <systemAccount> <AdempiereID> <AdempierePwd>
-sh "$ADEMPIERE_DB_PATH"/ImportIdempiere.sh $SYSUSER/"$ADEMPIERE_DB_SYSTEM" reference reference "$ADEMPIERE_DB_SYSTEM"
+# Parameter: <adempiereID> <adempierePwd> <systemUser> <systemPwd>
+sh "$ADEMPIERE_DB_PATH"/ImportIdempiere.sh reference reference "$ADEMPIERE_DB_SYSTEM_USER" "$ADEMPIERE_DB_SYSTEM"

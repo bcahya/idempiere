@@ -28,6 +28,7 @@
 		<module>org.adempiere.server</module>		
 		<module>org.adempiere.ui</module>
 		<module>org.adempiere.ui.zk</module>
+		<module>javax.websocket-api.fragment</module>
 		<module>org.apache.ecs</module>
 		<module>org.compiere.db.oracle.provider</module>
 		<module>org.compiere.db.postgresql.provider</module>
@@ -76,6 +77,8 @@
 		<module>../plugins/jpiere.plugin.webui.formwindow</module>
 		<module>../plugins/org.devcoffee.idempiere.s3storage</module>
 		<module>../plugins/jpiere.plugin.delete</module>
+    <module>org.idempiere.bouncy.castle-feature</module>
+    <module>coverage-report</module>
 	</modules>
 
 </project>

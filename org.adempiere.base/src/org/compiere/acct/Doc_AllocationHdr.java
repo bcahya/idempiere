@@ -43,6 +43,7 @@ import org.compiere.model.MPayment;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.compiere.util.Util;
 
 /**
  *  Post Allocation Documents.
@@ -361,8 +362,10 @@ public class Doc_AllocationHdr extends Doc
 						getC_Currency_ID(), null, allocationSource);		//	payment currency
 					if (fl != null)
 						allocationAccounted = fl.getAcctBalance().negate();
-					if (fl != null && invoice != null)
+					if (fl != null && invoice != null) {
 						fl.setAD_Org_ID(invoice.getAD_Org_ID());
+						fl.setC_BPartner_ID(invoice.getC_BPartner_ID());
+					}
 
 					// for Realized Gain & Loss
 					flForRGL = factForRGL.createLine (line, bpAcct,
@@ -416,8 +419,10 @@ public class Doc_AllocationHdr extends Doc
 						getC_Currency_ID(), allocationSource, null);		//	payment currency
 					if (fl != null)
 						allocationAccounted = fl.getAcctBalance();
-					if (fl != null && invoice != null)
+					if (fl != null && invoice != null) {
 						fl.setAD_Org_ID(invoice.getAD_Org_ID());
+						fl.setC_BPartner_ID(invoice.getC_BPartner_ID());
+					}
 
 					// for Realized Gain & Loss
 					flForRGL = factForRGL.createLine (line, bpAcct,
@@ -647,8 +652,32 @@ public class Doc_AllocationHdr extends Doc
 				&& factLine.getUserElement1_ID() == prevFactLine.getUserElement1_ID()
 				&& factLine.getUserElement2_ID() == prevFactLine.getUserElement2_ID()
 				&& factLine.getUser1_ID() == prevFactLine.getUser1_ID()
-				&& factLine.getUser2_ID() == prevFactLine.getUser2_ID());
+				&& factLine.getUser2_ID() == prevFactLine.getUser2_ID()
+				&& factLine.getA_Asset_ID() == prevFactLine.getA_Asset_ID()
+				&& factLine.getC_Employee_ID() == prevFactLine.getC_Employee_ID()
+				&& factLine.getC_Charge_ID() == prevFactLine.getC_Charge_ID()
+				&& factLine.getC_CostCenter_ID() == prevFactLine.getC_CostCenter_ID()
+				&& factLine.getC_Department_ID() == prevFactLine.getC_Department_ID()
+				&& factLine.getM_Warehouse_ID() == prevFactLine.getM_Warehouse_ID()
+				&& factLine.getM_AttributeSetInstance_ID() == prevFactLine.getM_AttributeSetInstance_ID())
+				&& areCustomFieldsEqual(factLine.getCustomFieldText1(), prevFactLine.getCustomFieldText1())
+				&& areCustomFieldsEqual(factLine.getCustomFieldText2(), prevFactLine.getCustomFieldText2())
+				&& areCustomFieldsEqual(factLine.getCustomFieldText3(), prevFactLine.getCustomFieldText3())
+				&& areCustomFieldsEqual(factLine.getCustomFieldText4(), prevFactLine.getCustomFieldText4());
 	}
+
+	/**
+	 * Compares two custom field text values.
+	 * 
+	 * @param  cfieldText1 fact from Custom Field Text
+	 * @param  cfieldText2 fact to Custom Field Text
+	 * @return
+	 */
+	private boolean areCustomFieldsEqual(String cfieldText1, String cfieldText2)
+	{
+		return (Util.isEmpty(cfieldText1) && Util.isEmpty(cfieldText2))
+				|| (!Util.isEmpty(cfieldText1) && cfieldText1.equalsIgnoreCase(cfieldText2));
+	}// areCustomFieldsEqual
 
 	/**
 	 * 	Create Cash Based Acct

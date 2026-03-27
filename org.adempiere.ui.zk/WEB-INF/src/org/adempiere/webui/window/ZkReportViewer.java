@@ -42,8 +42,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.adempiere.base.Core;
 import org.adempiere.base.upload.IUploadService;
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.exceptions.DBException;
 import org.adempiere.util.Callback;
+import org.adempiere.util.ProcessUtil;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.Extensions;
 import org.adempiere.webui.LayoutUtils;
@@ -75,6 +77,7 @@ import org.adempiere.webui.panel.StatusBarPanel;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.IServerPushCallback;
+import org.adempiere.webui.util.Icon;
 import org.adempiere.webui.util.ServerPushTemplate;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.util.ZkContextRunnable;
@@ -84,9 +87,11 @@ import org.compiere.model.MAttachment;
 import org.compiere.model.MAuthorizationAccount;
 import org.compiere.model.MClient;
 import org.compiere.model.MLanguage;
+import org.compiere.model.MPInstance;
 import org.compiere.model.MProcess;
 import org.compiere.model.MQuery;
 import org.compiere.model.MRole;
+import org.compiere.model.MRule;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.MToolBarButtonRestrict;
@@ -473,7 +478,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		
 		bCustomize.setName("Customize");
 		if (ThemeManager.isUseFontIconForImage())
-			bCustomize.setIconSclass("z-icon-Preference");
+			bCustomize.setIconSclass(Icon.getIconSclass(Icon.PREFERENCE));
 		else
 			bCustomize.setImage(ThemeManager.getThemeResource("images/Preference24.png"));
 		bCustomize.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "PrintCustomize")));
@@ -490,7 +495,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		
 		bFind.setName("Find");
 		if (ThemeManager.isUseFontIconForImage())
-			bFind.setIconSclass("z-icon-Find");
+			bFind.setIconSclass(Icon.getIconSclass(Icon.FIND));
 		else
 			bFind.setImage(ThemeManager.getThemeResource("images/Find24.png"));
 		bFind.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Find")));		
@@ -514,7 +519,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		
 		bSendMail.setName("SendMail");
 		if (ThemeManager.isUseFontIconForImage())
-			bSendMail.setIconSclass("z-icon-SendMail");
+			bSendMail.setIconSclass(Icon.getIconSclass(Icon.SEND_MAIL));
 		else
 			bSendMail.setImage(ThemeManager.getThemeResource("images/SendMail24.png"));
 		bSendMail.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "SendMail")));
@@ -531,7 +536,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		
 		bArchive.setName("Archive");
 		if (ThemeManager.isUseFontIconForImage())
-			bArchive.setIconSclass("z-icon-Archive");
+			bArchive.setIconSclass(Icon.getIconSclass(Icon.ARCHIVE));
 		else
 			bArchive.setImage(ThemeManager.getThemeResource("images/Archive24.png"));
 		bArchive.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Archive")));
@@ -551,7 +556,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		if (tableId > 0 && recordId > 0) {
 			bAttachment.setName("Attachment");
 			if (ThemeManager.isUseFontIconForImage())
-				bAttachment.setIconSclass("z-icon-Attachment");
+				bAttachment.setIconSclass(Icon.getIconSclass(Icon.ATTACHMENT));
 			else
 				bAttachment.setImage(ThemeManager.getThemeResource("images/Attachment24.png"));
 			bAttachment.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Attachment")));
@@ -571,7 +576,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		{
 			bExport.setName("Export");
 			if (ThemeManager.isUseFontIconForImage())
-				bExport.setIconSclass("z-icon-Export");
+				bExport.setIconSclass(Icon.getIconSclass(Icon.EXPORT));
 			else
 				bExport.setImage(ThemeManager.getThemeResource("images/Export24.png"));
 			bExport.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Export")));
@@ -592,7 +597,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		
 		bRefresh.setName("Refresh");
 		if (ThemeManager.isUseFontIconForImage())
-			bRefresh.setIconSclass("z-icon-Refresh");
+			bRefresh.setIconSclass(Icon.getIconSclass(Icon.REFRESH));
 		else
 			bRefresh.setImage(ThemeManager.getThemeResource("images/Refresh24.png"));
 		bRefresh.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Refresh")));
@@ -614,7 +619,11 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 			&& m_reportEngine.isReplaceTabContent()) {
 			bReRun.setName("ReRun");
 			if (ThemeManager.isUseFontIconForImage())
+<<<<<<< HEAD
 				bReRun.setIconSclass("z-icon-ReRun");
+=======
+				bReRun.setIconSclass(Icon.getIconSclass(Icon.RE_RUN));
+>>>>>>> release-13
 			else
 				bReRun.setImage(ThemeManager.getThemeResource("images/ReRun24.png"));
 			bReRun.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "ReRun")));
@@ -630,7 +639,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 
 		bWizard.setName("Wizard");
 		if (ThemeManager.isUseFontIconForImage())
-			bWizard.setIconSclass("z-icon-Wizard");
+			bWizard.setIconSclass(Icon.getIconSclass(Icon.WIZARD));
 		else
 			bWizard.setImage(ThemeManager.getThemeResource("images/Wizard24.png"));
 		bWizard.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "PrintWizard")));
@@ -649,7 +658,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		{
 			ToolBarButton more = new ToolBarButton();
 			if (ThemeManager.isUseFontIconForImage())
-				more.setIconSclass("z-icon-Expand");
+				more.setIconSclass(Icon.getIconSclass(Icon.EXPAND));
 			else
 				more.setImage(ThemeManager.getThemeResource("images/expand-header.png"));
 
@@ -666,7 +675,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 			if (uploadServicesMap.size() > 0) {
 				bCloudUpload.setName("CloudUpload");
 				if (ThemeManager.isUseFontIconForImage())
-					bCloudUpload.setIconSclass("z-icon-FileImport");
+					bCloudUpload.setIconSclass(Icon.getIconSclass(Icon.FILE_IMPORT));
 				else
 					bCloudUpload.setImage(ThemeManager.getThemeResource("images/FileImport24.png"));
 				bCloudUpload.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "CloudUpload")));
@@ -1258,7 +1267,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 			new WReport (AD_Table_ID, data.getQuery(), component, m_WindowNo);
 		}
 		else
-			log.warning("No Table found for " + data.getQuery().getWhereClause(true));
+			log.warning("No Table found for " + data.getQuery().getSQLFilter(true));
 	}	//	executeDrill
 
 	/**
@@ -1585,6 +1594,8 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 		if (getAttribute("IsSOTrx") != null) {
 			Env.setContext(Env.getCtx(), m_WindowNo, "IsSOTrx", getAttribute("IsSOTrx").toString());
 		}
+		if (m_reportEngine.getProcessInfo() != null)
+			Env.setContext(Env.getCtx(), m_WindowNo, MPInstance.COLUMNNAME_AD_PInstance_ID, m_reportEngine.getProcessInfo().getAD_PInstance_ID());
 		ProcessModalDialog processModalDialog = new ProcessModalDialog(this, m_WindowNo, pi);
 		ZKUpdateUtil.setWindowWidthX(processModalDialog, 850);
 		this.getParent().appendChild(processModalDialog);
@@ -1729,7 +1740,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 			if (find == null) 
 			{
 
-				find = Extensions.getFindWindow(m_WindowNo, 0, title, AD_Table_ID, tableName,m_reportEngine.getWhereExtended(), findFields, 1, AD_Tab_ID, null);
+				find = Extensions.getFindWindow(m_WindowNo, 0, title, AD_Table_ID, tableName,m_reportEngine.getExtendedFilter(), findFields, 1, AD_Tab_ID, null);
 	            
 				if (!find.initialize()) 
 	            {
@@ -1933,7 +1944,37 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 						PrintInfo printInfo = viewer.m_reportEngine.getPrintInfo();
 						ProcessInfo jasperProcessInfo = new ProcessInfo (viewer.getTitle(), format.getJasperProcess_ID());
 						jasperProcessInfo.setRecord_ID (printInfo.getRecord_ID());
+						jasperProcessInfo.setRecord_UU ( printInfo.getRecord_UU() );
 						jasperProcessInfo.setTable_ID(printInfo.getAD_Table_ID());
+						// if there's process, need to run it before preview
+						MProcess jasperProcess = new MProcess(Env.getCtx(), format.getJasperProcess_ID(), null);
+						jasperProcessInfo.setAD_Process_UU(jasperProcess.getAD_Process_UU());
+						if (!Util.isEmpty(jasperProcess.getClassname(), true)) {
+							if (   !ProcessUtil.JASPER_STARTER_CLASS.equals(jasperProcess.getClassname())
+								&& !ProcessUtil.JASPER_STARTER_CLASS_DEPRECATED.equals(jasperProcess.getClassname())) {
+								jasperProcessInfo.setClassName (jasperProcess.getClassname());
+								MPInstance jasperInstance = new MPInstance(Env.getCtx(), jasperProcessInfo.getAD_Process_ID(),
+										jasperProcessInfo.getTable_ID(), jasperProcessInfo.getRecord_ID(),
+										jasperProcessInfo.getRecord_UU());
+								jasperInstance.saveEx();
+								jasperProcessInfo.setAD_PInstance_ID (jasperInstance.getAD_PInstance_ID());
+								boolean runOk = false;
+								if (jasperProcess.getClassname().toLowerCase().startsWith(MRule.SCRIPT_PREFIX)) {
+									runOk = ProcessUtil.startScriptProcess(Env.getCtx(), jasperProcessInfo, null);
+								} else {
+									runOk = ProcessUtil.startJavaProcess(Env.getCtx(), jasperProcessInfo, null, true);
+								}
+								if (!runOk || jasperProcessInfo.isError()) {
+									String msg = jasperProcessInfo.getSummary();
+									if (Util.isEmpty(msg, true)) {
+										msg = Msg.getMsg(Env.getCtx(), "ProcessRunError");
+									}
+									msg = msg + " (" + jasperProcessInfo.getTitle() + ")";
+									throw new AdempiereException(msg);
+								}
+							}							
+						}
+																		
 						jasperProcessInfo.setSerializableObject(format);
 						ArrayList<ProcessInfoParameter> jasperPrintParams = new ArrayList<ProcessInfoParameter>();
 						ProcessInfoParameter pip = new ProcessInfoParameter(ServerReportCtl.PARAM_PRINT_FORMAT, format, null, null, null);

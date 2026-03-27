@@ -1,4 +1,5 @@
 <%@ page import="org.bmlaurus.home.Prop" %>
+<<<<<<< HEAD
 <!--
 Theme Name: iDempiere Theme
 Version: 2.0
@@ -157,20 +158,19 @@ Author URI: http://www.bmlaurus.com
 			//check each time the ready state changes
 			//to see if the object is ready
 			reader.onreadystatechange = checkReadyState;
+=======
+<%
+    Prop.load();
+    String homepage = Prop.getProperty(Prop.HOMEPAGE);
+    // Validate homepage to prevent path traversal attacks
+    if (homepage == null
+            || !(homepage.endsWith(".jsp") || homepage.endsWith(".html"))
+            || homepage.contains("/")
+            || homepage.contains("\\")
+        ) {
+            homepage = "idempiere-13.jsp";
+        }
+%>
+>>>>>>> release-13
 
-			function checkReadyState() {
-			  if (reader.readyState === 4) {
-			    //check to see whether request for the file failed or succeeded
-			    if ((reader.status == 200) || (reader.status === 0)) {
-			      ;
-			    } else {
-			      element.style.display = "none";
-			    }
-			  }
-			}
-			
-			reader.send(null);
-		}
-	</script>
-</body>
-</html>
+<jsp:include page="<%= homepage %>" />

@@ -51,9 +51,14 @@ import org.compiere.util.Env;
 import org.idempiere.test.AbstractTestCase;
 import org.idempiere.test.DictionaryIDs;
 import org.junit.jupiter.api.Test;
+<<<<<<< HEAD
+=======
+import org.junit.jupiter.api.parallel.Isolated;
+>>>>>>> release-13
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+@Isolated
 public class MArchiveTest extends AbstractTestCase {
 
 	public MArchiveTest() {

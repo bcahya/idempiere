@@ -19,6 +19,7 @@ import java.io.FileNotFoundException;
 import java.util.Properties;
 import java.util.Vector;
 import java.util.logging.Level;
+import java.util.stream.IntStream;
 
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.ClientInfo;
@@ -45,6 +46,7 @@ import org.adempiere.webui.event.DialogEvents;
 import org.adempiere.webui.factory.ButtonFactory;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.FeedbackManager;
+import org.adempiere.webui.util.Icon;
 import org.adempiere.webui.util.Statistic;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.Adempiere;
@@ -309,19 +311,19 @@ public class AboutWindow extends Window implements EventListener<Event> {
 		hbox.appendChild(bErrorsOnly);
 		hbox.appendChild(new Space());
         btnDownload = new Button(Msg.getMsg(Env.getCtx(), "SaveFile"));
-		btnDownload.setIconSclass("z-icon-Save");	
+		btnDownload.setIconSclass(Icon.getIconSclass(Icon.SAVE));	
 		btnDownload .setTooltiptext("Download session log");
 		LayoutUtils.addSclass("txt-btn", btnDownload);
 		btnDownload.addEventListener(Events.ON_CLICK, this);
 		hbox.appendChild(btnDownload);
         btnErrorEmail = new Button(Msg.getMsg(Env.getCtx(), "SendEMail"));
-		btnErrorEmail.setIconSclass("z-icon-SendMail");
+		btnErrorEmail.setIconSclass(Icon.getIconSclass(Icon.SEND_MAIL));
 		btnErrorEmail.setTooltiptext("Email session log");
 		LayoutUtils.addSclass("txt-btn", btnErrorEmail);
 		btnErrorEmail.addEventListener(Events.ON_CLICK, this);
 		hbox.appendChild(btnErrorEmail);
         btnViewLog = new Button(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "View")));
-		btnViewLog.setIconSclass("z-icon-File");
+		btnViewLog.setIconSclass(Icon.getIconSclass(Icon.FILE));
 		btnViewLog.setTooltiptext("View session log");
 		LayoutUtils.addSclass("txt-btn", btnViewLog);
 		btnViewLog.addEventListener(Events.ON_CLICK, this);
@@ -527,18 +529,11 @@ public class AboutWindow extends Window implements EventListener<Event> {
 	private void reloadLogProps() {
 		Properties props = new Properties();
 		String propertyFileName = Ini.getFileName(false);
-		FileInputStream fis = null;
-		try {
-			fis = new FileInputStream(propertyFileName);
+		try (FileInputStream fis = new FileInputStream(propertyFileName)){
+			
 			props.load(fis);
 		} catch (Exception e) {
 			throw new AdempiereException("Could not load properties file, cause: " + e.getLocalizedMessage());
-		} finally {
-			if (fis != null) {
-				try {
-					fis.close();
-				} catch (Exception e) {}
-			}
 		}
 		String globalLevel = props.getProperty(Ini.P_TRACELEVEL);
 		if (! Util.isEmpty(globalLevel)) {
@@ -546,26 +541,22 @@ public class AboutWindow extends Window implements EventListener<Event> {
 			if (! Util.isEmpty(globalLevel)) {
 				CLogMgt.setLevel(globalLevel);
 				Level level = CLogMgt.getLevel();
-				for (int i = 0; i < CLogMgt.LEVELS.length; i++) {
-					if (CLogMgt.LEVELS[i].intValue() == level.intValue()) {
-						levelListBox.setSelectedIndex(i);
-						break;
-					}
-				}
+				IntStream.range(0, CLogMgt.LEVELS.length)
+				         .filter(i -> CLogMgt.LEVELS[i].intValue() == level.intValue())
+				         .findFirst()
+				         .ifPresent(levelListBox::setSelectedIndex);
 			}
 		}
 		for(Object key : props.keySet()) {
 			if (key instanceof String) {
 				String s = (String)key;
+				/* Special properties to set log level for specific packages, not encrypted, for example:
+				 * org.eclipse.jetty.ee8.annotations.AnnotationParser.TraceLevel=SEVERE
+				 */
 				if (s.endsWith("."+Ini.P_TRACELEVEL)) {
 					String level = props.getProperty(s);
-					if (! Util.isEmpty(level)) {
-						level = SecureEngine.decrypt(level, 0);
-						if (! Util.isEmpty(level)) {
-							s = s.substring(0, s.length() - ("."+Ini.P_TRACELEVEL).length());
-							CLogMgt.setLevel(s, level);
-						}
-					}
+					s = s.substring(0, s.length() - ("."+Ini.P_TRACELEVEL).length());
+					CLogMgt.setLevel(s, level);
 				}
 			}
 		}

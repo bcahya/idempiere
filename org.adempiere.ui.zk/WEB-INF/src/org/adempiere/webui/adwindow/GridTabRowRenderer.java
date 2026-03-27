@@ -41,6 +41,7 @@ import org.adempiere.webui.panel.HelpController;
 import org.adempiere.webui.session.SessionManager;
 import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.GridTabDataBinder;
+import org.adempiere.webui.util.Icon;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.model.GridField;
 import org.compiere.model.GridTab;
@@ -333,7 +334,7 @@ public class GridTabRowRenderer implements RowRenderer<Object[]>, RowRendererExt
 		} else if (gridField.getDisplayType() == DisplayType.Button) {
 			// Each row renderer --- ctx per row wise
 			GridRowCtx gridRowCtx = new GridRowCtx(Env.getCtx(), gridTab, rowIndex);
-			WButtonEditor editor = new WButtonEditor(gridField, rowIndex);
+			WButtonEditor editor = (WButtonEditor) WebEditorFactory.getEditor(gridField, false);
 			editor.setValue(gridTab.getValue(rowIndex, gridField.getColumnName()));
 			editor.setReadWrite(gridField.isEditable(gridRowCtx, true,true));
 			editor.getComponent().setAttribute(GRID_ROW_INDEX_ATTR, rowIndex);
@@ -746,7 +747,7 @@ public class GridTabRowRenderer implements RowRenderer<Object[]>, RowRendererExt
 			if (ThemeManager.isUseFontIconForImage()) 
 			{
 				Label indicatorLabel = (Label) cell.getFirstChild();
-				indicatorLabel.setSclass("row-indicator-selected z-icon-Edit");
+				indicatorLabel.setSclass("row-indicator-selected "+Icon.getIconSclass(Icon.EDIT));
 			}
 			else
 				cell.setSclass("row-indicator-selected");

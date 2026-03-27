@@ -78,9 +78,9 @@ import org.eevolution.model.MPPProductBOMLine;
 public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 {
 	/**
-	 * generated serial id
+	 * 
 	 */
-	private static final long serialVersionUID = 3638956335920347393L;
+	private static final long serialVersionUID = 5482272395772856311L;
 
 	public static final String MATCH_TO_RECEIPT_SQL =
 			"""
@@ -342,7 +342,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 	 * 	@param setOrder set Order links
 	 *	@return Invoice
 	 */
-	@Deprecated
+	@Deprecated (since="13", forRemoval=true)
 	public static MInvoice copyFrom (MInvoice from, Timestamp dateDoc,
 		int C_DocTypeTarget_ID, boolean isSOTrx, boolean counter,
 		String trxName, boolean setOrder)
@@ -555,6 +555,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 		setC_Activity_ID(line.getC_Activity_ID());
 		setUser1_ID(line.getUser1_ID());
 		setUser2_ID(line.getUser2_ID());
+		setC_CostCenter_ID(line.getC_CostCenter_ID());
+		setC_Department_ID(line.getC_Department_ID());
 		//
 		setC_DocTypeTarget_ID(line.getC_DocType_ID());
 		setDateInvoiced(line.getDateInvoiced());
@@ -708,6 +710,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 		setC_Activity_ID(order.getC_Activity_ID());
 		setUser1_ID(order.getUser1_ID());
 		setUser2_ID(order.getUser2_ID());
+		setC_CostCenter_ID(order.getC_CostCenter_ID());
+		setC_Department_ID(order.getC_Department_ID());
 	}	//	setOrder
 
 	/**
@@ -738,6 +742,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 		setC_Activity_ID(ship.getC_Activity_ID());
 		setUser1_ID(ship.getUser1_ID());
 		setUser2_ID(ship.getUser2_ID());
+		setC_CostCenter_ID(ship.getC_CostCenter_ID());
+		setC_Department_ID(ship.getC_Department_ID());
 		//
 		if (ship.getC_Order_ID() != 0)
 		{
@@ -1995,7 +2001,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 		boolean fromPOS = false;
 		if ( getC_Order_ID() > 0 )
 		{
-			fromPOS = getC_Order().getC_POS_ID() > 0;
+			MOrder order = new MOrder(getCtx(), getC_Order_ID(), get_TrxName());
+			fromPOS = order.getC_POS_ID() > 0;
 		}
 
   		//	Create Cash Payment
@@ -2085,7 +2092,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 
 				if (receipt.isProcessed()){
 
-					BigDecimal movementQty = receiptLine.getM_InOut().getMovementType().charAt(1) == '-' ? receiptLine.getMovementQty().negate() : receiptLine.getMovementQty();
+					BigDecimal movementQty = receiptLine.getParent().getMovementType().charAt(1) == '-' ? receiptLine.getMovementQty().negate() : receiptLine.getMovementQty();
 					BigDecimal matchQty = isCreditMemo() ? line.getQtyInvoiced().negate() : line.getQtyInvoiced();
 
 					if (movementQty.compareTo(matchQty) < 0)
@@ -3019,6 +3026,8 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
         setC_Campaign_ID(originalInvoice.getC_Campaign_ID());
         setUser1_ID(originalInvoice.getUser1_ID());
         setUser2_ID(originalInvoice.getUser2_ID());
+		setC_CostCenter_ID(originalInvoice.getC_CostCenter_ID());
+		setC_Department_ID(originalInvoice.getC_Department_ID());
 	}
 
 	/**
@@ -3151,7 +3160,23 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 	 * @return list of unpaid invoice data
 	 */
 	public static Vector<Vector<Object>> getUnpaidInvoiceData(boolean isMultiCurrency, Timestamp date, int AD_Org_ID, int C_Currency_ID, 
-			int C_BPartner_ID, String trxName)
+			int C_BPartner_ID, String trxName) {
+		return getUnpaidInvoiceData(isMultiCurrency, date, AD_Org_ID, C_Currency_ID, C_BPartner_ID, true, trxName);
+	}
+
+	/**
+	 * Get unpaid invoices
+	 * @param isMultiCurrency false to apply currency filter
+	 * @param date invoice open amount as at date
+	 * @param AD_Org_ID 0 for all orgs
+	 * @param C_Currency_ID mandatory, use as invoice document filter if isMultiCurrency is false
+	 * @param C_BPartner_ID mandatory bpartner filter
+	 * @param sameBP true to only include invoices with C_BPartner_ID, false to include invoices with C_BPartner_ID and invoices with related business partner through C_BP_Relation
+	 * @param trxName optional trx name
+	 * @return list of unpaid invoice data
+	 */
+	public static Vector<Vector<Object>> getUnpaidInvoiceData(boolean isMultiCurrency, Timestamp date, int AD_Org_ID, int C_Currency_ID, 
+			int C_BPartner_ID, boolean sameBP, String trxName)
 	{
 		/********************************
 		 *  Load unpaid Invoices
@@ -3176,15 +3201,20 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 			+ "currencyConvertInvoice(i.C_Invoice_ID,?,invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID),?)*i.MultiplierAP, "  //  7   #3, #4  Converted Open
 			+ "currencyConvertInvoice(i.C_Invoice_ID"                               //  8       AllowedDiscount
 			+ ",?,invoiceDiscount(i.C_Invoice_ID,?,C_InvoicePaySchedule_ID),i.DateInvoiced)*i.Multiplier*i.MultiplierAP,"               //  #5, #6
-			+ "i.MultiplierAP "
+			+ "i.MultiplierAP,bp.Name,bp.c_BPartner_ID "							//  9..11
 			+ "FROM C_Invoice_v i"		//  corrected for CM/Split
 			+ " INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
+			+ " INNER JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y'"
-			+ " AND i.C_BPartner_ID=?");                                            //  #7
+			+ " AND (i.C_BPartner_ID=?");                                           //  #7
+		if (sameBP)
+			sql.append(")");
+		else
+			sql.append(" OR i.C_BPartner_ID IN (SELECT C_BPartner_ID FROM C_BP_Relation br WHERE C_BPartnerRelation_ID=? AND IsPayFrom='Y' AND IsActive='Y'))");
 		if (!isMultiCurrency)
-			sql.append(" AND i.C_Currency_ID=?");                                   //  #8
+			sql.append(" AND i.C_Currency_ID=?");
 		if (AD_Org_ID != 0 ) 
-			sql.append(" AND i.AD_Org_ID=" + AD_Org_ID);
+			sql.append(" AND i.AD_Org_ID=?");
 		sql.append(" ORDER BY i.DateInvoiced, i.DocumentNo");
 		if (s_log.isLoggable(Level.FINE)) s_log.fine("InvSQL=" + sql.toString());
 		
@@ -3196,15 +3226,20 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 		try
 		{
 			pstmt = DB.prepareStatement(sql.toString(), trxName);
-			pstmt.setInt(1, C_Currency_ID);
-			pstmt.setTimestamp(2, date);
-			pstmt.setInt(3, C_Currency_ID);
-			pstmt.setTimestamp(4, date);
-			pstmt.setInt(5, C_Currency_ID);
-			pstmt.setTimestamp(6, date);
-			pstmt.setInt(7, C_BPartner_ID);
+			int idx = 1;
+			pstmt.setInt(idx++, C_Currency_ID);
+			pstmt.setTimestamp(idx++, date);
+			pstmt.setInt(idx++, C_Currency_ID);
+			pstmt.setTimestamp(idx++, date);
+			pstmt.setInt(idx++, C_Currency_ID);
+			pstmt.setTimestamp(idx++, date);
+			pstmt.setInt(idx++, C_BPartner_ID);
+			if (!sameBP)
+				pstmt.setInt(idx++, C_BPartner_ID);
 			if (!isMultiCurrency)
-				pstmt.setInt(8, C_Currency_ID);
+				pstmt.setInt(idx++, C_Currency_ID);
+			if (AD_Org_ID != 0)
+				pstmt.setInt(idx++, AD_Org_ID);
 			rs = pstmt.executeQuery();
 			while (rs.next())
 			{
@@ -3230,6 +3265,10 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 				line.add(Env.ZERO);      			//  6/8-WriteOff
 				line.add(Env.ZERO);					// 7/9-Applied
 				line.add(open);				    //  8/10-OverUnder
+				if (!sameBP) {
+					KeyNamePair ppbp = new KeyNamePair(rs.getInt(11), rs.getString(10));
+					line.add(ppbp);
+				}
 
 				//	Add when open <> 0 (i.e. not if no conversion rate)
 				if (Env.ZERO.compareTo(open) != 0)
@@ -3444,9 +3483,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 
 		MInvoiceLine[] lines = getLines();
 		for(MInvoiceLine line : lines) {
-			if (line.getC_OrderLine_ID() > 0)
-			     orderIDSet.add(line.getC_OrderLine().getC_Order_ID());
-		   }
+			if (line.getC_OrderLine_ID() > 0) {
+				MOrderLine orderLine = new MOrderLine(getCtx(), line.getC_OrderLine_ID(), get_TrxName());
+				orderIDSet.add(orderLine.getC_Order_ID());
+			}
+		}
 
 		if(orderIDSet.isEmpty())
 			return false;

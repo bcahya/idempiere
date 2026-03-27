@@ -276,7 +276,12 @@ public class MigrateStorageProvider extends SvrProcess {
 				if (! (oldProviderId == 0 || MStorageProvider.METHOD_Database.equals(oldProvider.getMethod()))) { // DB method doesn't require delete
 					IAttachmentStore oldStore = oldProvider.getAttachmentStore();
 					// delete file on old storage
-					oldStore.delete(attachment, oldProvider);
+					try {
+						attachment.set_Attribute(MAttachment.MIGRATE_STORAGE_DELETING_OLD_PROVIDER, "Y");
+						oldStore.delete(attachment, oldProvider);
+					} finally {
+						attachment.set_Attribute(MAttachment.MIGRATE_STORAGE_DELETING_OLD_PROVIDER, null);
+					}
 					commitEx();
 				}
 			}
@@ -351,9 +356,11 @@ public class MigrateStorageProvider extends SvrProcess {
 			}
 			MImage image = new MImage(getCtx(), imageId, get_TrxName());
 			int oldProviderId = image.getAD_StorageProvider_ID();
-			byte[] data = image.getBinaryData();
+			InputStream is = image.getInputStream();
+			if (is == null) //nothing to migrate
+				continue;
 			image.setStorageProvider(newProvider);
-			image.setBinaryData(data);
+			image.setInputStream(is); // set the stream to the new provider
 			image.set_ValueNoCheck("Updated", new Timestamp(System.currentTimeMillis())); // to force save
 			// create file on the new storage provider
 			image.saveEx();

@@ -327,8 +327,6 @@ public class EnvTest extends AbstractTestCase {
 		expr = "@"+Env.PREFIX_SYSCONFIG_VARIABLE + MSysConfig.ZK_MAX_UPLOAD_SIZE+"@='0'";
 		evaluation = Evaluator.evaluateLogic(evaluatee, expr);
 		assertFalse(evaluation, "Unexpected logic evaluation result");
-<<<<<<< HEAD
-=======
 
         // test parse with and without SQL
 		Env.setContext(Env.getCtx(), windowNo, "TestString", "'MyString'");
@@ -344,7 +342,6 @@ public class EnvTest extends AbstractTestCase {
 		assertEquals("SELECT * FROM C_Charge WHERE Name='MyString'", parsedText, "Unexpected parsed text forSQL=false for "+expr);
 		parsedText = Env.parseContext(Env.getCtx(), windowNo, expr, true, false, false, true);
 		assertEquals("SELECT * FROM C_Charge WHERE Name='MyString'", parsedText, "Unexpected parsed text forSQL=true for "+expr);
->>>>>>> release-13
 	}
 
 	@Test
@@ -433,8 +430,6 @@ public class EnvTest extends AbstractTestCase {
     	String expected = "The record 80000 about SuperUser was created by GardenUser and updated by GardenAdmin";
     	assertEquals(expected, mMailText.getMailText());
     }
-<<<<<<< HEAD
-=======
 
 	@Test
 	public void testSetContextString() {
@@ -1716,5 +1711,4 @@ public class EnvTest extends AbstractTestCase {
 		assertEquals("ContextValue", merged.get(1), "Second param should be from contextParams");
 		assertEquals("AfterContext", merged.get(2), "Third param should be from sqlParams");
 	}
->>>>>>> release-13
 }

@@ -608,11 +608,7 @@ public class WFileImport extends ADForm implements EventListener<Event>
 			    result -> {
 			        if (importedFinal > 0) {
 			            MQuery query = new MQuery(m_format.getAD_Table_ID());
-<<<<<<< HEAD
-			            query.addRestriction("I_IsImported='N'");
-=======
 			            query.addRestriction(new SQLFragment("I_IsImported=?", List.of("N")));
->>>>>>> release-13
 			            AEnv.zoom(m_format.getAD_Table_ID(), 0, query);
 			        }
 			    });

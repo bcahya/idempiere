@@ -906,13 +906,6 @@ public class MPayment extends X_C_Payment
 		return true;
 	}	//	beforeSave
 
-	@Override
-	protected boolean beforeDelete() {
-		@SuppressWarnings("unused")
-		boolean ok = MPaySelectionCheck.deleteGeneratedDraft(getCtx(), getC_Payment_ID(), get_TrxName());
-		return true;
-	}
-
 	/**
 	 * Validates if the BP is allowed to pay as owner of the document or as a proxy in BP Relationship
 	 * @param c_BPartner_ID
@@ -2343,43 +2336,21 @@ public class MPayment extends X_C_Payment
 			if (allocatePaySelection())
 				return true;
 			
-		//	Allocate to multiple Payments based on entry
-		MPaymentAllocate[] pAllocs = MPaymentAllocate.get(this);
-		if (pAllocs.length == 0)
-			return false;
-		
-		MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
-			getDateTrx(), getC_Currency_ID(), 
-				Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + getDocumentNo(), 
-				get_TrxName());
-		alloc.setAD_Org_ID(getAD_Org_ID());
-		alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment; IDEMPIERE-1532 tbayen
-		if (!alloc.save())
-		{
-			log.severe("P.Allocations not created");
-			return false;
-		}
-		//	Lines
-		for (int i = 0; i < pAllocs.length; i++)
-		{
-			MPaymentAllocate pa = pAllocs[i];
-
-			BigDecimal allocationAmt = pa.getAmount();			//	underpayment
-			if (pa.getOverUnderAmt().signum() < 0 && pa.getAmount().signum() > 0)
-				allocationAmt = allocationAmt.add(pa.getOverUnderAmt());	//	overpayment (negative)
-
-			MAllocationLine aLine = null;
-			if (isReceipt())
-				aLine = new MAllocationLine (alloc, allocationAmt,
-					pa.getDiscountAmt(), pa.getWriteOffAmt(), pa.getOverUnderAmt());
-			else
-				aLine = new MAllocationLine (alloc, allocationAmt.negate(),
-					pa.getDiscountAmt().negate(), pa.getWriteOffAmt().negate(), pa.getOverUnderAmt().negate());
-			aLine.setDocInfo(getC_BPartner_ID(), 0, pa.getC_Invoice_ID());
-			aLine.setPaymentInfo(getC_Payment_ID(), 0, getC_BankTransfer_ID());
-			if (!aLine.save(get_TrxName()))
-				log.warning("P.Allocations - line not saved");
-			else
+			if (getC_Order_ID() != 0)
+				return false;
+				
+			//	Allocate to multiple Payments based on entry
+			MPaymentAllocate[] pAllocs = MPaymentAllocate.get(this);
+			if (pAllocs.length == 0)
+				return false;
+			
+			MAllocationHdr alloc = new MAllocationHdr(getCtx(), false, 
+				getDateTrx(), getC_Currency_ID(), 
+					Msg.translate(getCtx(), "C_Payment_ID")	+ ": " + getDocumentNo(), 
+					get_TrxName());
+			alloc.setAD_Org_ID(getAD_Org_ID());
+			alloc.setDateAcct(getDateAcct()); // in case date acct is different from datetrx in payment; IDEMPIERE-1532 tbayen
+			if (!alloc.save())
 			{
 				log.severe("P.Allocations not created");
 				return false;
@@ -2400,7 +2371,7 @@ public class MPayment extends X_C_Payment
 				else
 					aLine = new MAllocationLine (alloc, allocationAmt.negate(),
 						pa.getDiscountAmt().negate(), pa.getWriteOffAmt().negate(), pa.getOverUnderAmt().negate());
-				aLine.setDocInfo(pa.getC_BPartner_ID(), 0, pa.getC_Invoice_ID());
+				aLine.setDocInfo(getC_BPartner_ID(), 0, pa.getC_Invoice_ID());
 				aLine.setPaymentInfo(getC_Payment_ID(), 0, getC_BankTransfer_ID());
 				if (!aLine.save(get_TrxName()))
 					log.warning("P.Allocations - line not saved");
@@ -2422,7 +2393,7 @@ public class MPayment extends X_C_Payment
 		}
 		return true;
 	}	//	allocateIt
-
+	
 	/**
 	 * 	Allocate to single AP/AR Invoice
 	 * 	@return true if allocated

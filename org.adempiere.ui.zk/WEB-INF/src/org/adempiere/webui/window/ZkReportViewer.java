@@ -619,11 +619,7 @@ public class ZkReportViewer extends Window implements EventListener<Event>, IRep
 			&& m_reportEngine.isReplaceTabContent()) {
 			bReRun.setName("ReRun");
 			if (ThemeManager.isUseFontIconForImage())
-<<<<<<< HEAD
-				bReRun.setIconSclass("z-icon-ReRun");
-=======
 				bReRun.setIconSclass(Icon.getIconSclass(Icon.RE_RUN));
->>>>>>> release-13
 			else
 				bReRun.setImage(ThemeManager.getThemeResource("images/ReRun24.png"));
 			bReRun.setTooltiptext(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "ReRun")));

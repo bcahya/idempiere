@@ -123,53 +123,10 @@ public class WPreference extends WQuickEntry implements EventListener<Event>, Va
 	/**
 	 * Layout dialog
 	 */
-<<<<<<< HEAD
-	private void init() {
-
-		Div div = new Div();
-		div.setStyle(LINE_DIV_STYLE);
-		morePreferences= new A();	
-		morePreferences.setLabel(Msg.translate(Env.getCtx(), "MorePreferences"));
-		morePreferences.addEventListener(Events.ON_CLICK, this);
-
-		int windowID = Env.getZoomWindowID(MUserPreference.Table_ID, recordId);
-		if (windowID > 0) {
-			Boolean access = MRole.getDefault().getWindowAccess(windowID);
-			if (access != null && access.booleanValue())
-				div.appendChild(morePreferences);
-		}
-
-		this.appendChild(div);
-				
-		MMenu myProfileMenu = MMenu.get(SystemIDs.MY_PROFILE_MENU_ID);		
-		div = new Div();
-		div.setStyle(LINE_DIV_STYLE);
-		myProfile= new A();	
-		myProfile.setLabel(myProfileMenu.get_Translation("Name"));
-		myProfile.addEventListener(Events.ON_CLICK, this);
-		
-		windowID = MMenu.get(SystemIDs.MY_PROFILE_MENU_ID).getAD_Window_ID();
-		if (windowID > 0) {
-			Boolean access = MRole.getDefault().getWindowAccess(windowID);
-			if (access != null && access.booleanValue())
-				div.appendChild(myProfile);
-		}
-
-		this.appendChild(div);
-		
-		div = new Div();
-		div.setStyle(LINE_DIV_STYLE);
-		addgadgets= new A();	
-		addgadgets.setLabel( Msg.translate(Env.getCtx(), "ManageGadgets"));
-		addgadgets.addEventListener(Events.ON_CLICK, this);
-		div.appendChild(addgadgets);		
-		this.appendChild(div);
-=======
 	protected void init() {
 		this.appendChild(getMorePreferences());
 		this.appendChild(getMyProfile());
 		this.appendChild(getGadgets());
->>>>>>> release-13
 
 		if (Env.getAD_Client_ID(Env.getCtx()) <= 1000010 && Env.getAD_User_ID(Env.getCtx()) <= 102) {
 			this.appendChild(new Space());

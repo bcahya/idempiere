@@ -657,14 +657,9 @@ public class Doc_MatchPO extends Doc
 			int Ref_CostDetail_ID = 0;
 			if (mMatchPO.getReversal_ID() > 0 && mMatchPO.get_ID() > mMatchPO.getReversal_ID())
 			{
-<<<<<<< HEAD
-				MCostDetail cd = MCostDetail.getOrder(as, getM_Product_ID(), mMatchPO.getM_AttributeSetInstance_ID(),
-						mMatchPO.getReversal().getC_OrderLine_ID(), 0, mMatchPO.getReversal().getDateAcct(), getTrxName());
-=======
 				MMatchPO reversal = new MMatchPO(getCtx(), mMatchPO.getReversal_ID(), getTrxName());
 				MCostDetail cd = MCostDetail.getOrder(as, getM_Product_ID(), mMatchPO.getM_AttributeSetInstance_ID(),
 						reversal.getC_OrderLine_ID(), 0, reversal.getDateAcct(), getTrxName());
->>>>>>> release-13
 				if (cd != null)
 					Ref_CostDetail_ID = cd.getM_CostDetail_ID();
 			}
@@ -711,14 +706,9 @@ public class Doc_MatchPO extends Doc
 			int Ref_CostDetail_ID = 0;
 			if (mMatchPO.getReversal_ID() > 0 && mMatchPO.get_ID() > mMatchPO.getReversal_ID())
 			{
-<<<<<<< HEAD
-				MCostDetail cd = MCostDetail.getOrder(as, getM_Product_ID(), mMatchPO.getM_AttributeSetInstance_ID(),
-						mMatchPO.getReversal().getC_OrderLine_ID(), 0, mMatchPO.getReversal().getDateAcct(), getTrxName());
-=======
 				MMatchPO reversal = new MMatchPO(getCtx(), mMatchPO.getReversal_ID(), getTrxName());
 				MCostDetail cd = MCostDetail.getOrder(as, getM_Product_ID(), mMatchPO.getM_AttributeSetInstance_ID(),
 						reversal.getC_OrderLine_ID(), 0, reversal.getDateAcct(), getTrxName());
->>>>>>> release-13
 				if (cd != null)
 					Ref_CostDetail_ID = cd.getM_CostDetail_ID();
 			}

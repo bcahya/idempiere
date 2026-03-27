@@ -360,11 +360,7 @@ public class WEditorPopupMenu extends Menupopup implements EventListener<Event>
 		if (!MRole.getDefault().isTableAccessExcluded(MFieldSuggestion.Table_ID)) {
 			Menuitem editor = new Menuitem(Msg.getElement(Env.getCtx(), "AD_FieldSuggestion_ID"));
 			if (ThemeManager.isUseFontIconForImage())
-<<<<<<< HEAD
-				editor.setIconSclass("z-icon-FieldSuggestion");
-=======
 				editor.setIconSclass(Icon.getIconSclass(Icon.FIELD_SUGGESTION));
->>>>>>> release-13
 			else
 				editor.setImage(ThemeManager.getThemeResource("images/FieldSuggestion16.png"));
 			editor.addEventListener(Events.ON_CLICK, new EventListener<Event>() {

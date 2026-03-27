@@ -131,11 +131,7 @@ public class UserPanel implements EventListener<Event>, Composer<Component>
 		
     	Menuitem mi = new Menuitem(Msg.getMsg(Env.getCtx(), "RequestNew"));
     	if (ThemeManager.isUseFontIconForImage())
-<<<<<<< HEAD
-    		mi.setIconSclass("z-icon-comment");
-=======
 		    mi.setIconSclass(Icon.getIconSclass(Icon.COMMENT));
->>>>>>> release-13
     	else
     		mi.setImage(ThemeManager.getThemeResource("images/Request16.png"));
     	mi.setId("CreateRequest");
@@ -143,11 +139,7 @@ public class UserPanel implements EventListener<Event>, Composer<Component>
     	mi.addEventListener(Events.ON_CLICK, this);
     	mi = new Menuitem(Msg.getMsg(Env.getCtx(), "EMailSupport"));
     	if (ThemeManager.isUseFontIconForImage())
-<<<<<<< HEAD
-    		mi.setIconSclass("z-icon-envelope");
-=======
     	  mi.setIconSclass(Icon.getIconSclass(Icon.ENVELOPE));
->>>>>>> release-13
     	else
     		mi.setImage(ThemeManager.getThemeResource("images/SendMail16.png"));
     	mi.setId("EmailSupport");

@@ -524,22 +524,6 @@ public class X_C_Country extends PO implements I_C_Country, I_Persistent
 		return (String)get_Value(COLUMNNAME_M49Code);
 	}
 
-	/** Set M49 Code.
-		@param M49Code Standard country codes for statistical use (M49) defined by the United Nations
-	*/
-	public void setM49Code (String M49Code)
-	{
-		set_Value (COLUMNNAME_M49Code, M49Code);
-	}
-
-	/** Get M49 Code.
-		@return Standard country codes for statistical use (M49) defined by the United Nations
-	  */
-	public String getM49Code()
-	{
-		return (String)get_Value(COLUMNNAME_M49Code);
-	}
-
 	/** Set Media Size.
 		@param MediaSize Java Media Size
 	*/

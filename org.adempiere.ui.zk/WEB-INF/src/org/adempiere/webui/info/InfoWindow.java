@@ -1831,10 +1831,6 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 	 * Add all ViewID in each MInfoProcess to query.<br/>
 	 * @param from
 	 */
-<<<<<<< HEAD
-	protected void addViewIDToQuery (String from) {
-		m_sqlMain = addMoreColumnToQuery (m_sqlMain, infoProcessList, from);
-=======
 	@SuppressWarnings("removal")
 	protected void addViewIDToQuery (String from) {
 		if (m_sqlFragmentMain != null && m_sqlFragmentMain.sqlClause().length() > 0) {
@@ -1844,18 +1840,12 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 				m_sqlMain = m_sqlFragmentMain.toSQLWithParameters();
 			}
 		}
->>>>>>> release-13
 	}
 	
 	/**
 	 * If {@link #keyColumnOfView} not null and not display, add {@link #keyColumnOfView} to query
 	 * @param from
 	 */
-<<<<<<< HEAD
-	protected void addKeyViewToQuery (String from) {
-		if (isNeedAppendKeyViewData()){
-			m_sqlMain = addMoreColumnToQuery (m_sqlMain, new IInfoColumn [] {keyColumnOfView}, from);
-=======
 	@SuppressWarnings("removal")
 	protected void addKeyViewToQuery (String from) {
 		if (m_sqlFragmentMain != null && m_sqlFragmentMain.sqlClause().length() > 0 && isNeedAppendKeyViewData()){
@@ -1864,7 +1854,6 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 				m_sqlFragmentMain = new SQLFragment(sql, m_sqlFragmentMain.parameters());
 				m_sqlMain = m_sqlFragmentMain.toSQLWithParameters();
 			}
->>>>>>> release-13
 		}
 	}
 	
@@ -1884,21 +1873,12 @@ public class InfoWindow extends InfoPanel implements ValueChangeListener, EventL
 	 * @param from original from, used to look where to add the additional column
 	 * @return SQL after append column
 	 */
-<<<<<<< HEAD
-	protected String addMoreColumnToQuery (String sqlMain, IInfoColumn [] listInfoColumn, String from) {
-		if (sqlMain == null || sqlMain.length() == 0 || listInfoColumn == null || listInfoColumn.length == 0){
-			return sqlMain;
-		}
-				
-		int fromIndex = sqlMain.indexOf("FROM " + from);
-=======
 	protected String addMoreColumnToQuery (String sqlClause, IInfoColumn [] listInfoColumn, String from) {
 		if (sqlClause == null || sqlClause.length() == 0 || listInfoColumn == null || listInfoColumn.length == 0){
 			return sqlClause;
 		}
 				
 		int fromIndex = sqlClause.indexOf("FROM " + from);
->>>>>>> release-13
 		// split Select and from clause
 		String selectClause = sqlClause.substring(0, fromIndex);
 		String fromClause = sqlClause.substring(fromIndex);

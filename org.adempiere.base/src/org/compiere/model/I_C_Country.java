@@ -377,19 +377,6 @@ _lLoOaAcCa09&quot;
 	  */
 	public String getM49Code();
 
-    /** Column name M49Code */
-    public static final String COLUMNNAME_M49Code = "M49Code";
-
-	/** Set M49 Code.
-	  * Standard country codes for statistical use (M49) defined by the United Nations
-	  */
-	public void setM49Code (String M49Code);
-
-	/** Get M49 Code.
-	  * Standard country codes for statistical use (M49) defined by the United Nations
-	  */
-	public String getM49Code();
-
     /** Column name MediaSize */
     public static final String COLUMNNAME_MediaSize = "MediaSize";
 

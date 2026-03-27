@@ -297,14 +297,6 @@ public class WArchiveViewer extends Archive implements IFormController, EventLis
 	 * @param inputStream
 	 */
 	private void reportViewer(String name, InputStream inputStream)
-<<<<<<< HEAD
-	{	
-		media = new AMedia(name + ".pdf", "pdf", "application/pdf", RepeatableInputStream.getInstance(inputStream));
-		if (ClientInfo.isMobile() || MSysConfig.getBooleanValue(MSysConfig.ZK_USE_PDF_JS_VIEWER, false, Env.getAD_Client_ID(Env.getCtx())))
-		{
-			mediaVersion ++;
-			if (form.getDesktop() == null)
-=======
 	{
 		String suffix = ".pdf";
 		String mimeType = "application/pdf";
@@ -319,7 +311,6 @@ public class WArchiveViewer extends Archive implements IFormController, EventLis
 		if (autoPreviewList.contains(mimeType)) {
 			media = new AMedia(name + suffix, extension, mimeType, RepeatableInputStream.getInstance(inputStream));
 			if (extension.equalsIgnoreCase("pdf") && (ClientInfo.isMobile() || MSysConfig.getBooleanValue(MSysConfig.ZK_USE_PDF_JS_VIEWER, false, Env.getAD_Client_ID(Env.getCtx()))))
->>>>>>> release-13
 			{
 				mediaVersion ++;
 				if (form.getDesktop() == null)

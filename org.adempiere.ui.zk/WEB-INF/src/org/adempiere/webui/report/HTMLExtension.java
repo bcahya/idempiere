@@ -212,11 +212,7 @@ public class HTMLExtension implements IHTMLExtension {
 		// Support to Parse Context Variable
 		if (resFile.contains("@"))
 		{
-<<<<<<< HEAD
-			resFile = Env.parseContext(Env.getCtx(), 0, resFile, false);
-=======
 			resFile = Env.parseContext(Env.getCtx(), 0, resFile, false, false, false, false);
->>>>>>> release-13
 			if (Util.isEmpty(resFile))
 			{
 				log.warning("Report theme URL '"+ theme +"' failed to parse, Defaulting to default report.css url");

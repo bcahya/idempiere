@@ -21,10 +21,7 @@ import org.adempiere.webui.component.Menupopup;
 import org.adempiere.webui.desktop.IDesktop;
 import org.adempiere.webui.event.ZoomEvent;
 import org.adempiere.webui.theme.ThemeManager;
-<<<<<<< HEAD
-=======
 import org.adempiere.webui.util.Icon;
->>>>>>> release-13
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.WCtxHelpSuggestion;
 import org.compiere.model.GridField;
@@ -840,11 +837,7 @@ public class HelpController
 				item.setLabel(Msg.getElement(Env.getCtx(), "AD_CtxHelpSuggestion_ID"));
 			}
 			if (ThemeManager.isUseFontIconForImage())
-<<<<<<< HEAD
-				item.setIconSclass("z-icon-FieldSuggestion");
-=======
 				item.setIconSclass(Icon.getIconSclass(Icon.FIELD_SUGGESTION));
->>>>>>> release-13
 			else
 				item.setImage(ThemeManager.getThemeResource("images/FieldSuggestion16.png"));
 			appendChild(item);

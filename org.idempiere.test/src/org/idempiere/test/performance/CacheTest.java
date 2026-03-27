@@ -1454,26 +1454,4 @@ public class CacheTest extends AbstractTestCase {
 	    CacheMgt.get().unregister(cache);
 	}
 
-	@Test
-	public void testTrlCacheReset() {
-		// test cache reset
-		String locale = "es_CO";
-		MProduct p = new MProduct(Env.getCtx(), DictionaryIDs.M_Product.AZALEA_BUSH.id, null);
-		String esName = p.get_Translation("Name", locale);
-		Query query = new Query(Env.getCtx(), MProduct.Table_Name+"_Trl", "M_Product_ID=? AND AD_Language=?", null);
-		PO po = query.setParameters(p.get_ID(), locale).firstOnly();
-		assertEquals(esName, po.get_Value("Name"), "Expected translation not found");
-		try {
-			po.set_ValueOfColumn("Name", esName+"1");
-			po.saveEx();
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-			}
-			assertEquals(esName+"1", p.get_Translation("Name", locale), "Translation not refresh in cache");
-		} finally {
-			po.set_ValueOfColumn("Name", esName);
-			po.saveEx();
-		}
-	}
 }

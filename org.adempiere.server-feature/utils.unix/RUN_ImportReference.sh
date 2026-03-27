@@ -17,14 +17,11 @@ if [ -z "$ADEMPIERE_DB_SYSTEM_USER" ]; then
     fi
 fi
 
-<<<<<<< HEAD
-=======
 SUFFIX=""
 if [ "$ADEMPIERE_DB_PATH" = "postgresql" ]; then
     SUFFIX="_pg"
 fi
 
->>>>>>> release-13
 echo Re-Create Reference User and import "$IDEMPIERE_HOME"/data/seed/Adempiere.dmp - \("$ADEMPIERE_DB_NAME"\)
 echo "== The import will show warnings. This is OK =="
 cd "$IDEMPIERE_HOME"/data/seed || exit

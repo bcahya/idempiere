@@ -31,11 +31,6 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AverageCostingZeroQtyException;
 import org.compiere.model.ICostInfo;
-<<<<<<< HEAD
-import org.compiere.model.I_C_Order;
-import org.compiere.model.I_C_OrderLine;
-=======
->>>>>>> release-13
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MAcctSchemaElement;
@@ -492,12 +487,8 @@ public class Doc_MatchInv extends Doc
 		else if (X_M_Cost.COSTINGMETHOD_AveragePO.equals(costingMethod)  && m_invoiceLine.getM_Product_ID() > 0 && isReversal)
 		{
 			isStockCoverage = true;
-<<<<<<< HEAD
-			if (matchInv.getReversal().getDateAcct().compareTo(getDateAcct()) != 0) { // reverse-accrual
-=======
 			MMatchInv originalMatchInv = new MMatchInv(getCtx(), matchInv.getReversal_ID(), getTrxName());
 			if (originalMatchInv.getDateAcct().compareTo(getDateAcct()) != 0) { // reverse-accrual
->>>>>>> release-13
 				// If it is a reverse-accrual, perform a stock coverage check using the current stock quantity to prevent any leftover amount in the inventory GL
 				int AD_Org_ID = m_receiptLine.getAD_Org_ID();
 				int M_AttributeSetInstance_ID = matchInv.getM_AttributeSetInstance_ID();
@@ -753,14 +744,9 @@ public class Doc_MatchInv extends Doc
 			int Ref_CostDetail_ID = 0;
 			if (matchInv.getReversal_ID() > 0 && matchInv.get_ID() > matchInv.getReversal_ID())
 			{
-<<<<<<< HEAD
-				MCostDetail cd = MCostDetail.getInvoice(as, getM_Product_ID(), matchInv.getM_AttributeSetInstance_ID(),
-						matchInv.getReversal().getC_InvoiceLine_ID(), 0, matchInv.getReversal().getDateAcct(), getTrxName());
-=======
 				MMatchInv originalMatchInv = new MMatchInv(getCtx(), matchInv.getReversal_ID(), getTrxName());
 				MCostDetail cd = MCostDetail.getInvoice(as, getM_Product_ID(), matchInv.getM_AttributeSetInstance_ID(),
 						originalMatchInv.getC_InvoiceLine_ID(), 0, originalMatchInv.getDateAcct(), getTrxName());
->>>>>>> release-13
 				if (cd != null)
 					Ref_CostDetail_ID = cd.getM_CostDetail_ID();
 			}		
@@ -822,14 +808,9 @@ public class Doc_MatchInv extends Doc
 				Ref_CostDetail_ID = 0;
 				if (matchInv.getReversal_ID() > 0 && matchInv.get_ID() > matchInv.getReversal_ID())
 				{
-<<<<<<< HEAD
-					MCostDetail cd = MCostDetail.getShipment(as, getM_Product_ID(), matchInv.getM_AttributeSetInstance_ID(),
-							matchInv.getReversal().getM_InOutLine_ID(), 0, getTrxName());
-=======
 					MMatchInv originalMatchInv = new MMatchInv(getCtx(), matchInv.getReversal_ID(), getTrxName());
 					MCostDetail cd = MCostDetail.getShipment(as, getM_Product_ID(), matchInv.getM_AttributeSetInstance_ID(),
 							originalMatchInv.getM_InOutLine_ID(), 0, getTrxName());
->>>>>>> release-13
 					if (cd != null)
 						Ref_CostDetail_ID = cd.getM_CostDetail_ID();
 				}

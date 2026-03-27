@@ -24,19 +24,11 @@
  **********************************************************************/
 package org.idempiere.test.model;
 
-<<<<<<< HEAD
-=======
 import static org.junit.jupiter.api.Assertions.assertEquals;
->>>>>>> release-13
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.math.BigDecimal;
-<<<<<<< HEAD
-
-import org.compiere.model.MMovement;
-import org.compiere.model.MMovementLine;
-=======
 import java.sql.Timestamp;
 import java.util.Properties;
 
@@ -46,16 +38,10 @@ import org.compiere.model.MClient;
 import org.compiere.model.MMovement;
 import org.compiere.model.MMovementLine;
 import org.compiere.model.MProduct;
->>>>>>> release-13
 import org.compiere.model.MStorageOnHand;
 import org.compiere.model.MUOMConversion;
 import org.compiere.model.MWarehouse;
 import org.compiere.util.Env;
-<<<<<<< HEAD
-import org.idempiere.test.AbstractTestCase;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Isolated;
-=======
 import org.compiere.util.TimeUtil;
 import org.idempiere.test.AbstractTestCase;
 import org.idempiere.test.DictionaryIDs;
@@ -63,7 +49,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
->>>>>>> release-13
 
 @Isolated
 public class InventoryMoveTest extends AbstractTestCase {
@@ -197,8 +182,6 @@ public class InventoryMoveTest extends AbstractTestCase {
 
 		rollback();
 	}
-<<<<<<< HEAD
-=======
 	
 	/**
 	 * IDEMPIERE-6737
@@ -322,5 +305,4 @@ public class InventoryMoveTest extends AbstractTestCase {
 		}
 	}
 	
->>>>>>> release-13
 }

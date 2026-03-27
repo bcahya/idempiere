@@ -31,10 +31,6 @@ import java.util.logging.Level;
 
 import org.adempiere.exceptions.AverageCostingZeroQtyException;
 import org.compiere.model.ICostInfo;
-<<<<<<< HEAD
-import org.compiere.model.I_M_InOutLine;
-=======
->>>>>>> release-13
 import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClientInfo;

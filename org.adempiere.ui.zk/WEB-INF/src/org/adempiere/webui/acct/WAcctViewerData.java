@@ -469,7 +469,8 @@ public class WAcctViewerData
 		}
 		
 		if (orderClause.length() == 0)
-			orderClause.append(RModel.TABLE_ALIAS).append(".Fact_Acct_ID");
+			orderClause.append(RModel.TABLE_ALIAS).append(".AD_Org_ID, ").
+				append(RModel.TABLE_ALIAS).append(".AmtAcctDr Desc");
 
 		RModel rm = getRModel();
 

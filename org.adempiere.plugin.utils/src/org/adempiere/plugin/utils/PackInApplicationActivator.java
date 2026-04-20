@@ -13,8 +13,10 @@
  *****************************************************************************/
 package org.adempiere.plugin.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +41,7 @@ import org.compiere.model.X_AD_Package_Imp;
 import org.compiere.model.X_AD_Package_Imp_Proc;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Util;
 
@@ -93,7 +96,7 @@ public class PackInApplicationActivator extends AbstractActivator{
 		File[] fileArray = getFilesToProcess(folders);
 		
 		if (fileArray.length <= 0) {
-			setSummary(Level.INFO, "No zip files to process");
+			setSummary(Level.INFO, "No zip or sql files to process");
 			return;
 		}
 
@@ -151,18 +154,29 @@ public class PackInApplicationActivator extends AbstractActivator{
 	private boolean packIn(File packinFile) {
 		if (packinFile != null) {
 			String fileName = packinFile.getName();
-			// The convention for package names is: yyyymmddHHMM_ClientValue_InformationalDescription.zip
-			String [] parts = fileName.split("_");
-			if (parts.length < 2) {
-				logger.warning("Wrong name, ignored " + fileName);
-				return false;
+			boolean isSqlFile = fileName.toLowerCase().endsWith(".sql");
+			String [] parts;
+			String clientValue;
+			boolean allClients;
+			if (!isSqlFile) {
+				parts = fileName.split("_");
+				if (parts.length < 2) {
+					logger.warning("Wrong name, ignored " + fileName);
+					return false;
+				}
+				logger.warning("Installing " + fileName + " ...");
+				clientValue = parts[1];
+				allClients = clientValue.startsWith("ALL-CLIENTS");
+			} else {
+				clientValue = "";
+				allClients = false;
+				logger.warning("Installing " + fileName + " ...");
 			}
-			logger.warning("Installing " + fileName + " ...");
-			String clientValue = parts[1];
-			boolean allClients = clientValue.startsWith("ALL-CLIENTS");
 			
 			int[] clientIDs;
-			if (allClients) {
+			if (isSqlFile) {
+				clientIDs = new int[]{0};
+			} else if (allClients) {
 				int[] seedClientIDs = new int[0];
 				String seedClientValue = "";
 				if (clientValue.startsWith("ALL-CLIENTS-")) {
@@ -178,7 +192,6 @@ public class PackInApplicationActivator extends AbstractActivator{
 						.setParameters(seedClientValue)
 						.setOrderBy("AD_Client_ID")
 						.getIDs();
-				// Process first the seed client, put seed in front of the array
 				int shift = 0;
 				if (seedClientIDs.length > 0)
 					shift = 1;
@@ -202,31 +215,36 @@ public class PackInApplicationActivator extends AbstractActivator{
 					String message = "Installing " + fileName + " in tenant " + client.getValue() + "/" + client.getName();
 					statusUpdate(message);
 				}
-				Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, client.getAD_Client_ID());
-				Env.setContext(Env.getCtx(), Env.AD_ROLE_ID, SystemIDs.ROLE_SYSTEM);
-				Env.setContext(Env.getCtx(), Env.AD_USER_ID, SystemIDs.USER_SYSTEM);
-				try {
-				    // call 2pack
-					if (service != null) {
-						if (!merge(packinFile, null)) {
-							return false;
-						}
-					} else {
-						if (!directMerge(packinFile, null)) {
-							return false;
-						}
-					}
-				} catch (Throwable e) {
-					logger.log(Level.WARNING, "Pack in failed.", e);
-					return false;
-				} finally {
+				if (isSqlFile) {
 					Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, 0);
-					Env.setContext(Env.getCtx(), Env.AD_ROLE_ID, (String)null);
-					Env.setContext(Env.getCtx(), Env.AD_USER_ID, (String)null);
+					Env.setContext(Env.getCtx(), Env.AD_ROLE_ID, SystemIDs.ROLE_SYSTEM);
+					Env.setContext(Env.getCtx(), Env.AD_USER_ID, SystemIDs.USER_SYSTEM);
+					if (!executeSqlFile(packinFile)) {
+						return false;
+					}
+				} else {
+					Env.setContext(Env.getCtx(), Env.AD_CLIENT_ID, client.getAD_Client_ID());
+					Env.setContext(Env.getCtx(), Env.AD_ROLE_ID, SystemIDs.ROLE_SYSTEM);
+					Env.setContext(Env.getCtx(), Env.AD_USER_ID, SystemIDs.USER_SYSTEM);
+					try {
+					    // call 2pack
+						if (service != null) {
+							if (!merge(packinFile, null)) {
+								return false;
+							}
+						} else {
+							if (!directMerge(packinFile, null)) {
+								return false;
+							}
+						}
+					} catch (Throwable e) {
+						logger.log(Level.WARNING, "Pack in failed.", e);
+						return false;
+					}
 				}
 				logger.warning(packinFile.getPath() + " installed");
 			}
-			if (allClients ) {
+			if (isSqlFile || allClients ) {
 				// when arriving here it means an ALL-CLIENTS 2pack was processed successfully
 				// register a record on System to avoid future reprocesses of the same file
 				X_AD_Package_Imp_Proc pimpr = new X_AD_Package_Imp_Proc(Env.getCtx(), 0, null);
@@ -285,16 +303,17 @@ public class PackInApplicationActivator extends AbstractActivator{
 	
 	private void processFilePath(File toProcess) {
 		if (toProcess.isFile() && toProcess.canRead()) {
-			if (toProcess.getName().toLowerCase().endsWith(".zip"))
+			String fileName = toProcess.getName().toLowerCase();
+			if (fileName.endsWith(".zip") || (fileName.endsWith(".sql") && fileName.contains("2pack_")))
 				filesToProcess.add(toProcess);
 			else {
-				logger.log(Level.WARNING, toProcess.getName() + " is not a valid .zip file");
+				logger.log(Level.WARNING, toProcess.getName() + " is not a valid .zip or 2Pack_*.sql file");
 				return;
 			}
 		} else if (toProcess.isDirectory() && toProcess.canRead()) {
 			FileFilter filter = new FileFilter() {
 				public boolean accept(File file) {
-					if (file.getName().toUpperCase().endsWith(".ZIP") || file.isDirectory())
+					if (file.getName().toUpperCase().endsWith(".ZIP") || (file.getName().toUpperCase().endsWith(".SQL") && file.getName().toUpperCase().contains("2PACK_")) || file.isDirectory())
 						return true;
 					else
 						return false;
@@ -329,11 +348,24 @@ public class PackInApplicationActivator extends AbstractActivator{
 		Iterator<File> iterator = filesToProcess.iterator();
 		while(iterator.hasNext()){
 			currentFile = iterator.next();
-			if (installedPackage(null)) {
+			String fileName = currentFile.getName();
+			if (fileName.toLowerCase().endsWith(".sql")) {
+				if (installedSqlPackage(fileName)) {
+					logger.log(Level.INFO, currentFile.getName() + " already installed. Removing it from the list...");
+					iterator.remove();
+				}
+			} else if (installedPackage(null)) {
 				logger.log(Level.INFO, currentFile.getName() + " already installed. Removing it from the list...");
 				iterator.remove();
 			}
 		}
+	}
+
+	private boolean installedSqlPackage(String fileName) {
+		String where = "AD_Client_ID=0 AND Name=? AND PK_Status='Completed successfully'";
+		Query q = new Query(Env.getCtx(), X_AD_Package_Imp.Table_Name, where, null)
+				.setParameters(fileName);
+		return q.match();
 	}
 	
 	private int[] getClientIDs(String clientValue) {
@@ -342,6 +374,37 @@ public class PackInApplicationActivator extends AbstractActivator{
 				.setParameters(clientValue)
 				.setOnlyActiveRecords(true);
 		return q.getIDs();
+	}
+
+	private boolean executeSqlFile(File sqlFile) {
+		StringBuilder sql = new StringBuilder();
+		try (BufferedReader reader = new BufferedReader(new FileReader(sqlFile))) {
+			String line;
+			while ((line = reader.readLine()) != null) {
+				sql.append(line).append("\n");
+			}
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Failed to read SQL file: " + sqlFile.getName(), e);
+			return false;
+		}
+
+		String[] statements = sql.toString().split(";");
+		for (String statement : statements) {
+			String trimmed = statement.trim();
+			if (Util.isEmpty(trimmed, true))
+				continue;
+			String upperTrimmed = trimmed.toUpperCase();
+			if (upperTrimmed.startsWith("SELECT") || upperTrimmed.startsWith("WITH")) {
+				continue;
+			}
+			try {
+				DB.executeUpdate(trimmed, null);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Failed to execute SQL statement: " + trimmed.substring(0, Math.min(100, trimmed.length())), e);
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override

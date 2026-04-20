@@ -13,9 +13,11 @@
  *****************************************************************************/
 package org.adempiere.plugin.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,8 +36,10 @@ import org.compiere.model.ServerStateChangeListener;
 import org.compiere.model.X_AD_Package_Imp;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.CLogger;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
+import org.compiere.util.Util;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -95,23 +99,36 @@ public class Incremental2PackActivator extends AbstractActivator {
 	private static class TwoPackEntry {
 		private URL url;
 		private String version;
-		private TwoPackEntry(URL url, String version) {
+		private boolean isSql;
+		private TwoPackEntry(URL url, String version, boolean isSql) {
 			this.url=url;
 			this.version = version;
+			this.isSql = isSql;
 		}
 	}
 	
 	protected void packIn(List<String> installedVersions) {
 		List<TwoPackEntry> list = new ArrayList<TwoPackEntry>();
+		List<TwoPackEntry> sqlList = new ArrayList<TwoPackEntry>();
 				
 		//2Pack_1.0.0.zip, 2Pack_1.0.1.zip, etc
 		Enumeration<URL> urls = context.getBundle().findEntries("/META-INF", "2Pack_*.zip", false);
-		if (urls == null)
+		Enumeration<URL> urlSql = context.getBundle().findEntries("/META-INF", "2Pack_*.sql", false);
+		if (urls == null && urlSql == null)
 			return;
-		while(urls.hasMoreElements()) {
-			URL u = urls.nextElement();
-			String version = extractVersionString(u);
-			list.add(new TwoPackEntry(u, version));
+		if (urls != null) {
+			while(urls.hasMoreElements()) {
+				URL u = urls.nextElement();
+				String version = extractVersionString(u);
+				list.add(new TwoPackEntry(u, version, false));
+			}
+		}
+		if (urlSql != null) {
+			while(urlSql.hasMoreElements()) {
+				URL u = urlSql.nextElement();
+				String version = extractVersionString(u);
+				sqlList.add(new TwoPackEntry(u, version, true));
+			}
 		}
 		
 		X_AD_Package_Imp firstImp = new Query(Env.getCtx(), X_AD_Package_Imp.Table_Name, "Name=? AND PK_Version=? AND PK_Status=?", null)
@@ -162,6 +179,29 @@ public class Incremental2PackActivator extends AbstractActivator {
 					}
 					list = newList;
 				}
+				if (sqlList.size() > 0 && installedVersions.size() > 0) {
+					List<TwoPackEntry> newSqlList = new ArrayList<TwoPackEntry>();
+					for(TwoPackEntry entry : sqlList) {
+						boolean patch = false;
+						for(String v : installedVersions) {
+							Version v1 = new Version(entry.version);
+							Version v2 = new Version(v);
+							int c = v2.compareTo(v1);
+							if (c == 0) {
+								patch = false;
+								break;
+							} else if (c > 0) {
+								patch = true;
+							}
+						}
+						if (patch) {
+							logger.log(Level.WARNING, "Patch SQL for " + getName() + " " + entry.version + " ...");
+						} else {
+							newSqlList.add(entry);
+						}
+					}
+					sqlList = newSqlList;
+				}
 				trx.commit(true);
 			} catch (Exception e) {
 				trx.rollback();
@@ -176,6 +216,12 @@ public class Incremental2PackActivator extends AbstractActivator {
 				return new Version(o1.version).compareTo(new Version(o2.version));
 			}
 		});		
+		Collections.sort(sqlList, new Comparator<TwoPackEntry>() {
+			@Override
+			public int compare(TwoPackEntry o1, TwoPackEntry o2) {
+				return new Version(o1.version).compareTo(new Version(o2.version));
+			}
+		});		
 				
 		try {
 			if (getDBLock()) {
@@ -183,6 +229,13 @@ public class Incremental2PackActivator extends AbstractActivator {
 					if (!installedVersions.contains(entry.version)) {
 						if (!packIn(entry.url)) {
 							// stop processing further packages if one fail
+							break;
+						}
+					}
+				}
+				for(TwoPackEntry entry : sqlList) {
+					if (!installedVersions.contains(entry.version)) {
+						if (!packInSql(entry.url)) {
 							break;
 						}
 					}
@@ -258,6 +311,72 @@ public class Incremental2PackActivator extends AbstractActivator {
 			}
 			logger.log(Level.WARNING, getName() + " " + packout.getPath() + " installed");
 		} 
+		return true;
+	}
+
+	protected boolean packInSql(URL packout) {
+		if (packout != null) {
+			MSession localSession = null;
+			if (Env.getContextAsInt(Env.getCtx(), Env.AD_SESSION_ID) <= 0) {
+				localSession = MSession.get(Env.getCtx());
+				if(localSession == null) {
+					localSession = MSession.create(Env.getCtx());
+				} else {
+					localSession = new MSession(Env.getCtx(), localSession.getAD_Session_ID(), null);
+				}
+				localSession.setWebSession("Incremental2PackActivator");
+				localSession.saveEx();
+			}
+			String path = packout.getPath();
+			String version = extractVersionString(packout);
+			logger.log(Level.WARNING, "Installing SQL " + getName() + " " + path + " ...");
+			InputStream stream = null;
+			try {
+				stream = packout.openStream();
+				StringBuilder sql = new StringBuilder();
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+					String line;
+					while ((line = reader.readLine()) != null) {
+						sql.append(line).append("\n");
+					}
+				}
+				String[] statements = sql.toString().split(";");
+				for (String statement : statements) {
+					String trimmed = statement.trim();
+					if (Util.isEmpty(trimmed, true))
+						continue;
+					String upperTrimmed = trimmed.toUpperCase();
+					if (upperTrimmed.startsWith("SELECT") || upperTrimmed.startsWith("WITH")) {
+						continue;
+					}
+					try {
+						DB.executeUpdate(trimmed, null);
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Failed to execute SQL: " + trimmed.substring(0, Math.min(100, trimmed.length())), e);
+						return false;
+					}
+				}
+
+				X_AD_Package_Imp pi = new X_AD_Package_Imp(Env.getCtx(), 0, null);
+				pi.setName(getName());
+				pi.setPK_Version(version);
+				pi.setPK_Status("Completed successfully");
+				pi.setProcessed(true);
+				pi.saveEx();
+			} catch (Throwable e) {
+				logger.log(Level.WARNING, "SQL pack in failed.", e);
+				return false;
+			} finally {
+				if (stream != null) {
+					try {
+						stream.close();
+					} catch (Exception e2) {}
+				}
+				if (localSession != null)
+					localSession.logout();
+			}
+			logger.log(Level.WARNING, getName() + " " + path + " SQL installed");
+		}
 		return true;
 	}
 

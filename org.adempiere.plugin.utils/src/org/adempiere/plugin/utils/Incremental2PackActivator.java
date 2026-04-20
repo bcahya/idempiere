@@ -130,7 +130,7 @@ public class Incremental2PackActivator extends AbstractActivator {
 				sqlList.add(new TwoPackEntry(u, version, true));
 			}
 		}
-		
+		//
 		X_AD_Package_Imp firstImp = new Query(Env.getCtx(), X_AD_Package_Imp.Table_Name, "Name=? AND PK_Version=? AND PK_Status=?", null)
 				.setParameters(getName(), "0.0.0", "Completed successfully")
 				.setClient_ID()

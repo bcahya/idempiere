@@ -13,9 +13,11 @@
  *****************************************************************************/
 package org.adempiere.plugin.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +36,7 @@ import org.compiere.model.ServerStateChangeListener;
 import org.compiere.model.X_AD_Package_Imp;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.CLogger;
-import org.compiere.util.CacheMgt;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
 import org.osgi.framework.BundleContext;
@@ -96,121 +98,193 @@ public class Incremental2PackActivator extends AbstractActivator {
 	private static class TwoPackEntry {
 		private URL url;
 		private String version;
-		private TwoPackEntry(URL url, String version) {
+		private boolean isSql;
+		private TwoPackEntry(URL url, String version, boolean isSql) {
 			this.url=url;
 			this.version = version;
+			this.isSql = isSql;
 		}
 	}
 	
 	protected void packIn(List<String> installedVersions) {
-		List<TwoPackEntry> list = new ArrayList<TwoPackEntry>();
-				
-		//2Pack_1.0.0.zip, 2Pack_1.0.1.zip, etc
-		Enumeration<URL> urls = context.getBundle().findEntries("/META-INF", "2Pack_*.zip", false);
-		if (urls == null)
-			return;
-		while(urls.hasMoreElements()) {
-			URL u = urls.nextElement();
-			String version = extractVersionString(u);
-			list.add(new TwoPackEntry(u, version));
-		}
-		
-		X_AD_Package_Imp firstImp = new Query(Env.getCtx(), X_AD_Package_Imp.Table_Name, "Name=? AND PK_Version=? AND PK_Status=?", null)
-				.setParameters(getName(), "0.0.0", "Completed successfully")
-				.setClient_ID()
-				.first();
-		if (firstImp == null) {
-			Trx trx = Trx.get(Trx.createTrxName(), true);
-			trx.setDisplayName(getClass().getName()+"_packIn");
-			try {
-				Env.getCtx().put(Env.AD_CLIENT_ID, 0);
-				
-				firstImp = new X_AD_Package_Imp(Env.getCtx(), 0, trx.getTrxName());
-				firstImp.setName(getName());
-				firstImp.setPK_Version("0.0.0");
-				firstImp.setPK_Status("Completed successfully");
-				firstImp.setProcessed(true);
-				firstImp.saveEx();
-				
-				if (list.size() > 0 && installedVersions.size() > 0) {
-					List<TwoPackEntry> newList = new ArrayList<TwoPackEntry>();
-					for(TwoPackEntry entry : list) {
-						boolean patch = false;
-						for(String v : installedVersions) {
-							Version v1 = new Version(entry.version);
-							Version v2 = new Version(v);
-							int c = v2.compareTo(v1);
-							if (c == 0) {
-								patch = false;
-								break;
-							} else if (c > 0) {
-								patch = true;
-							}
-						}
-						if (patch) {
-							logger.log(Level.WARNING, "Patch Meta Data for " + getName() + " " + entry.version + " ...");
-							
-							X_AD_Package_Imp pi = new X_AD_Package_Imp(Env.getCtx(), 0, trx.getTrxName());
-							pi.setName(getName());
-							pi.setPK_Version(entry.version);
-							pi.setPK_Status("Completed successfully");
-							pi.setProcessed(true);
-							pi.saveEx();
-													
-						} else {
-							newList.add(entry);
-						}
-					}
-					list = newList;
-				}
-				trx.commit(true);
-			} catch (Exception e) {
-				trx.rollback();
-				logger.log(Level.WARNING, e.getLocalizedMessage(), e);
-			} finally {
-				trx.close();
-			}
-		}
-		Collections.sort(list, new Comparator<TwoPackEntry>() {
-			@Override
-			public int compare(TwoPackEntry o1, TwoPackEntry o2) {
-				return new Version(o1.version).compareTo(new Version(o2.version));
-			}
-		});		
+	    List<TwoPackEntry> allList = new ArrayList<>();
 
-		boolean cacheReset = false;
-		try {
-			if (getDBLock()) {
-				for(TwoPackEntry entry : list) {
-					if (!installedVersions.contains(entry.version)) {
-						if (packIn(entry.url))
-							cacheReset = true;
-						else
-							break; // stop processing further packages if one fail
-					}
-				}
-			} else {
-				logger.log(Level.WARNING, "Could not acquire the DB lock to install:" + getName());
-			}
-		} catch (AdempiereSystemError e) {
-			e.printStackTrace();
-		} finally {
-			releaseLock();
-		}
-		logger.log(Level.INFO, "Cache Reset: " + cacheReset);
-		if (cacheReset)
-			CacheMgt.get().reset();
+	    // Ambil resource
+	    Enumeration<URL> urls = context.getBundle().findEntries("/META-INF", "2Pack_*.zip", false);
+	    Enumeration<URL> urlSql = context.getBundle().findEntries("/META-INF", "2Pack_*.sql", false);
+
+	    if (urls == null && urlSql == null)
+	        return;
+
+	    // ZIP
+	    if (urls != null) {
+	        while (urls.hasMoreElements()) {
+	            URL u = urls.nextElement();
+	            String version = extractVersionString(u);
+	            allList.add(new TwoPackEntry(u, version, false)); // false = ZIP
+	        }
+	    }
+
+	    // SQL
+	    if (urlSql != null) {
+	        while (urlSql.hasMoreElements()) {
+	            URL u = urlSql.nextElement();
+	            String version = extractVersionString(u);
+	            allList.add(new TwoPackEntry(u, version, true)); // true = SQL
+	        }
+	    }
+
+	    X_AD_Package_Imp firstImp = new Query(Env.getCtx(), X_AD_Package_Imp.Table_Name,
+	            "Name=? AND PK_Version=? AND PK_Status=?", null)
+	            .setParameters(getName(), "0.0.0", "Completed successfully")
+	            .setClient_ID()
+	            .first();
+
+	    if (firstImp == null) {
+	        Trx trx = Trx.get(Trx.createTrxName(), true);
+	        trx.setDisplayName(getClass().getName() + "_packIn");
+
+	        try {
+	            Env.getCtx().put(Env.AD_CLIENT_ID, 0);
+
+	            firstImp = new X_AD_Package_Imp(Env.getCtx(), 0, trx.getTrxName());
+	            firstImp.setName(getName());
+	            firstImp.setPK_Version("0.0.0");
+	            firstImp.setPK_Status("Completed successfully");
+	            firstImp.setProcessed(true);
+	            firstImp.saveEx();
+
+	            // PATCH FILTER
+	            if (allList.size() > 0 && installedVersions.size() > 0) {
+	                List<TwoPackEntry> newList = new ArrayList<>();
+
+	                for (TwoPackEntry entry : allList) {
+	                    boolean patch = false;
+
+	                    for (String v : installedVersions) {
+	                        Version v1 = new Version(entry.version);
+	                        Version v2 = new Version(v);
+	                        int c = v2.compareTo(v1);
+
+	                        if (c == 0) {
+	                            patch = false;
+	                            break;
+	                        } else if (c > 0) {
+	                            patch = true;
+	                        }
+	                    }
+
+	                    if (patch) {
+	                        if (entry.isSql) {
+	                            logger.log(Level.WARNING,
+	                                    "Patch SQL for " + getName() + " " + entry.version + " ...");
+	                        } else {
+	                            logger.log(Level.WARNING,
+	                                    "Patch Meta Data for " + getName() + " " + entry.version + " ...");
+
+	                            X_AD_Package_Imp pi = new X_AD_Package_Imp(Env.getCtx(), 0, trx.getTrxName());
+	                            pi.setName(getName());
+	                            pi.setPK_Version(entry.version);
+	                            pi.setPK_Status("Completed successfully");
+	                            pi.setProcessed(true);
+	                            pi.saveEx();
+	                        }
+	                    } else {
+	                        newList.add(entry);
+	                    }
+	                }
+
+	                allList = newList;
+	            }
+
+	            trx.commit(true);
+
+	        } catch (Exception e) {
+	            trx.rollback();
+	            logger.log(Level.WARNING, e.getLocalizedMessage(), e);
+	        } finally {
+	            trx.close();
+	        }
+	    }
+
+	    // SORT GLOBAL (VERSION + TYPE)
+	    Collections.sort(allList, new Comparator<TwoPackEntry>() {
+	        @Override
+	        public int compare(TwoPackEntry o1, TwoPackEntry o2) {
+	        	String[] p1 = o1.version.split("_");
+	            String[] p2 = o2.version.split("_");
+	            try {
+		            // 1. compare tanggal
+		            int dateCompare = p1[0].compareTo(p2[0]);
+		            if (dateCompare != 0) {
+		                return dateCompare;
+		            }
+	
+		            // 2. compare versi
+		            return new Version(p1[p1.length-1]).compareTo(new Version(p2[p2.length-1]));
+	        	} catch (Exception e) {
+	        		return new Version(p1[p1.length-1]).compareTo(new Version(p2[p2.length-1]));
+	        	}
+	        }
+	    });
+
+	    // EKSEKUSI
+	    try {
+	        if (getDBLock()) {
+	            for (TwoPackEntry entry : allList) {
+	            	logger.log(Level.WARNING,
+		                    "entry.url:" + entry.url);
+	                if (!installedVersions.contains(entry.version)) {
+
+	                    boolean success;
+	                    
+	                    if (entry.isSql) {
+	                        success = packInSql(entry.url);
+	                    } else {
+	                        success = packIn(entry.url);
+	                    }
+
+	    				X_AD_Package_Imp pi = new X_AD_Package_Imp(Env.getCtx(), 0, null);
+	    				pi.setName(getName());
+	    				pi.setPK_Version(entry.version);
+	    				pi.setPK_Status("Completed successfully");
+	    				pi.setProcessed(true);
+	    				pi.saveEx();
+	                    if (!success) {
+	                        break; // stop jika gagal
+	                    }
+	                }
+	            }
+	        } else {
+	            logger.log(Level.WARNING,
+	                    "Could not acquire the DB lock to install:" + getName());
+	        }
+	    } catch (AdempiereSystemError e) {
+	        e.printStackTrace();
+	    } finally {
+	        releaseLock();
+	    }
 	}
 
-	private String extractVersionString(URL u) {
-		String p = u.getPath();
-		int upos=p.lastIndexOf("2Pack_");
-		int dpos=p.lastIndexOf(".");
-		if (p.indexOf("_") != p.lastIndexOf("_"))
-			dpos=p.lastIndexOf("_");
-		String v = p.substring(upos+"2Pack_".length(), dpos);
-		return v;
-	}
+//	private String extractVersionString(URL u) {
+//		String p = u.getPath();
+//		int upos=p.lastIndexOf("2Pack_");
+//		int dpos=p.lastIndexOf(".");
+//		if (p.indexOf("_") != p.lastIndexOf("_"))
+//			dpos=p.lastIndexOf("_");
+//		String v = p.substring(upos+"2Pack_".length(), dpos);
+//		return v;
+//	}
+	
+	private static String extractVersionString(URL u) {
+        String p = u.getPath();
+        String fileName = p.substring(p.lastIndexOf('/') + 1);
+
+        int start = fileName.indexOf("2Pack_") + "2Pack_".length();
+        int end = fileName.lastIndexOf(".");
+
+        return fileName.substring(start, end);
+    }
 
 	protected boolean packIn(URL packout) {
 		if (packout != null && service != null) {
@@ -263,6 +337,67 @@ public class Incremental2PackActivator extends AbstractActivator {
 			}
 			logger.log(Level.WARNING, getName() + " " + packout.getPath() + " installed");
 		} 
+		return true;
+	}
+
+	protected boolean packInSql(URL packout) {
+		if (packout != null) {
+			MSession localSession = null;
+			if (Env.getContextAsInt(Env.getCtx(), Env.AD_SESSION_ID) <= 0) {
+				localSession = MSession.get(Env.getCtx());
+				if(localSession == null) {
+					localSession = MSession.create(Env.getCtx());
+				} else {
+					localSession = new MSession(Env.getCtx(), localSession.getAD_Session_ID(), null);
+				}
+				localSession.setWebSession("Incremental2PackActivator");
+				localSession.saveEx();
+			}
+			String path = packout.getPath();
+			String version = extractVersionString(packout);
+			logger.log(Level.WARNING, "Installing SQL " + getName() + " " + path + " ...");
+			InputStream stream = null;
+			try {
+				stream = packout.openStream();
+				StringBuilder sql = new StringBuilder();
+				try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
+					String line;
+					while ((line = reader.readLine()) != null) {
+						sql.append(line).append("\n");
+					}
+				}
+				DB.executeUpdate(sql.toString(), null);
+				
+//				String[] statements = sql.toString().split(";");
+//				for (String statement : statements) {
+//					String trimmed = statement.trim();
+//					if (Util.isEmpty(trimmed, true))
+//						continue;
+//					String upperTrimmed = trimmed.toUpperCase();
+//					if (upperTrimmed.startsWith("SELECT") || upperTrimmed.startsWith("WITH")) {
+//						continue;
+//					}
+//					try {
+//						DB.executeUpdate(trimmed, null);
+//					} catch (Exception e) {
+//						logger.log(Level.SEVERE, "Failed to execute SQL: " + trimmed.substring(0, Math.min(100, trimmed.length())), e);
+//						return false;
+//					}
+//				}
+			} catch (Throwable e) {
+				logger.log(Level.WARNING, "SQL pack in failed.", e);
+				return false;
+			} finally {
+				if (stream != null) {
+					try {
+						stream.close();
+					} catch (Exception e2) {}
+				}
+				if (localSession != null)
+					localSession.logout();
+			}
+			logger.log(Level.WARNING, getName() + " " + path + " SQL installed");
+		}
 		return true;
 	}
 

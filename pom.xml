@@ -80,5 +80,4 @@
     <module>org.idempiere.bouncy.castle-feature</module>
     <module>coverage-report</module>
 	</modules>
-
 </project>

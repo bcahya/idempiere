@@ -1561,6 +1561,7 @@ public class MCost extends X_M_Cost implements ICostInfo
 		
 		// get from MCost
 		MCost cost = get(ctx, AD_Client_ID, AD_Org_ID, M_Product_ID, M_CostType_ID, C_AcctSchema_ID, M_CostElement_ID, M_AttributeSetInstance_ID, trxName);
+		// issue-#7429
 		if (cost != null) {
 			if (history != null && MCostElement.COSTINGMETHOD_StandardCosting.equals(costingMethod)) {
 				cost.setCurrentQty(history.getCurrentQty());

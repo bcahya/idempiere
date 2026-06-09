@@ -1137,6 +1137,18 @@ public class MMatchPO extends X_M_MatchPO
 			}
 			
 			// Validate total M_MatchPO.Qty for C_InvoiceLine_ID against C_InvoiceLine.QtyInvoiced
+			//[SIS] - issue-#7526 Allowance
+			int cekMR = 0;
+			if (getM_InOutLine_ID() > 0) {
+				cekMR = DB.getSQLValueEx(get_TrxName(),
+						"select "
+						+ "	count(*)::int total "
+						+ "from m_inoutline iol "
+						+ "where iol.m_inout_id = ? "
+						+ "and  iol.isactive='Y' "
+						+ "and  iol.sis_approved_id is not null ",
+						getM_InOutLine().getM_InOut_ID());
+			}
 			if (getC_InvoiceLine_ID() > 0)
 			{
 				MInvoiceLine line = new MInvoiceLine(getCtx(), getC_InvoiceLine_ID(), get_TrxName());				
@@ -1168,33 +1180,21 @@ public class MMatchPO extends X_M_MatchPO
 						&& (   (qtyOrdered.signum() > 0 && invoicedQty.compareTo(qtyOrdered) > 0)
 						    || (qtyOrdered.signum() < 0 && invoicedQty.compareTo(qtyOrdered) < 0)
 						   )
+						&& cekMR <= 0 //[SIS] - issue-#7526 Allowance
 					   )
 					{
 						throw new IllegalStateException("Total matched invoiced qty > ordered qty. MatchedInvoicedQty="+invoicedQty+", OrderedQty="+qtyOrdered+", Line="+line);
 					}
 					// Validate total M_MatchPO.Qty (with M_InOutLine) for C_OrderLine_ID against C_OrderLine.QtyOrdered
-					//[SIS] - issue-#7526 Allowance
-					int cekMR = 0;
-					if (getM_InOutLine_ID() > 0) {
-						cekMR = DB.getSQLValueEx(get_TrxName(),
-								"select "
-								+ "	count(*)::int total "
-								+ "from m_inoutline iol "
-								+ "where iol.m_inout_id = ? "
-								+ "and  iol.isactive='Y' "
-								+ "and  iol.sis_approved_id is not null ",
-								getM_InOutLine().getM_InOut_ID());
-					}
-					if (cekMR <= 0) {
-						BigDecimal deliveredQty = DB.getSQLValueBD(get_TrxName(), "SELECT Coalesce(SUM(Qty),0) FROM M_MatchPO WHERE M_InOutLine_ID > 0 and C_OrderLine_ID=? AND Reversal_ID IS NULL" , getC_OrderLine_ID());
-						if (   deliveredQty != null
-							&& (   (qtyOrdered.signum() > 0 && deliveredQty.compareTo(qtyOrdered) > 0)
-							    || (qtyOrdered.signum() < 0 && deliveredQty.compareTo(qtyOrdered) < 0)
-							   )
+					BigDecimal deliveredQty = DB.getSQLValueBD(get_TrxName(), "SELECT Coalesce(SUM(Qty),0) FROM M_MatchPO WHERE M_InOutLine_ID > 0 and C_OrderLine_ID=? AND Reversal_ID IS NULL" , getC_OrderLine_ID());
+					if (   deliveredQty != null
+						&& (   (qtyOrdered.signum() > 0 && deliveredQty.compareTo(qtyOrdered) > 0)
+						    || (qtyOrdered.signum() < 0 && deliveredQty.compareTo(qtyOrdered) < 0)
 						   )
-						{
-							throw new IllegalStateException("Total matched delivered qty > ordered qty. MatchedDeliveredQty="+deliveredQty+", OrderedQty="+qtyOrdered+", Line="+line);
-						}
+						&& cekMR <= 0 //[SIS] - issue-#7526 Allowance
+					   )
+					{
+						throw new IllegalStateException("Total matched delivered qty > ordered qty. MatchedDeliveredQty="+deliveredQty+", OrderedQty="+qtyOrdered+", Line="+line);
 					}
 				}
 			}

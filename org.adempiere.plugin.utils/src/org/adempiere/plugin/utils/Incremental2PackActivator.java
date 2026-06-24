@@ -244,15 +244,15 @@ public class Incremental2PackActivator extends AbstractActivator {
 	                        success = packIn(entry.url);
 	                    }
 
+	    				if (!success) {
+	                        break; // stop jika gagal
+	                    }
 	    				X_AD_Package_Imp pi = new X_AD_Package_Imp(Env.getCtx(), 0, null);
 	    				pi.setName(getName());
 	    				pi.setPK_Version(entry.version);
 	    				pi.setPK_Status("Completed successfully");
 	    				pi.setProcessed(true);
 	    				pi.saveEx();
-	                    if (!success) {
-	                        break; // stop jika gagal
-	                    }
 	                }
 	            }
 	        } else {

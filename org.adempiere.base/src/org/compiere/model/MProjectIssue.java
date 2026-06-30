@@ -579,6 +579,10 @@ public class MProjectIssue extends X_C_ProjectIssue implements DocAction, DocOpt
 		}
 		if (cost != null)
 		{
+			//[SIS] - issue-#7519 tambahkan amount di project issue
+			set_ValueOfColumn("Amt", cost);
+			saveEx();
+			
 			MProject proj = new MProject(getCtx(), getC_Project_ID(), get_TrxName());
 			proj.setProjectBalanceAmt(proj.getProjectBalanceAmt().add(cost));
 			proj.saveEx(get_TrxName());

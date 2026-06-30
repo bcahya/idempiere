@@ -126,12 +126,13 @@ public class Doc_Inventory extends Doc
 				for (MInventoryLine line : lines) {
 					BigDecimal currentCostPrice = line.getCurrentCostPriceForCostAdjustment();
 					if (currentCostPrice != null) {
-						if (currentCostPrice.compareTo(line.getCurrentCostPrice()) != 0) {
-							line.setCurrentCostPrice(currentCostPrice);
-							line.saveEx(inventory.get_TrxName());
-							if (s_log.isLoggable(Level.INFO))
-								s_log.info("CurrentCostPrice updated to " + line.getCurrentCostPrice());
-						}
+						// Bayu Comment. issue-#7570. Why line.getCurrentCostPriceForCostAdjustment() return zero? Disable checker for now
+//						if (currentCostPrice.compareTo(line.getCurrentCostPrice()) != 0) {
+//							line.setCurrentCostPrice(currentCostPrice);
+//							line.saveEx(inventory.get_TrxName());
+//							if (s_log.isLoggable(Level.INFO))
+//								s_log.info("CurrentCostPrice updated to " + line.getCurrentCostPrice());
+//						}
 					}
 				}
 			}

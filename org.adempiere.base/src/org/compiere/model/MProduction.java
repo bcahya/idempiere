@@ -614,8 +614,10 @@ public class MProduction extends X_M_Production implements DocAction {
 			return DocAction.STATUS_Invalid; 
 		}
 
-		//[SIS] - ByPass check if from MO
-		if (get_ValueAsInt("SIS_MO_ID") <= 0 && getReversal_ID() == 0) {
+		//[SIS] - ByPass check if from MO or Project
+		if (get_ValueAsInt("SIS_MO_ID") <= 0 
+				&& getC_Project_ID() <= 0 
+				&& getReversal_ID() == 0) {
 			if (!isUseProductionPlan()) {
 				m_processMsg = validateEndProduct(getM_Product_ID());			
 				if (!Util.isEmpty(m_processMsg)) {

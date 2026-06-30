@@ -547,11 +547,13 @@ public class MInventory extends X_M_Inventory implements DocAction
 									as = a ; 
 							}
 						}
-						BigDecimal currentCostPrice = line.getCurrentCostPriceForCostAdjustment();
-						if (currentCostPrice != null && currentCostPrice.compareTo(currentCost) != 0) {
-							m_processMsg = "Current Cost for Line " + line.getLine() + " have changed.";
-							return DocAction.STATUS_Invalid; 
-						}
+						// Bayu - 7570.
+						// Set direct current cost price. Why line.getCurrentCostPriceForCostAdjustment() return zero?
+//						BigDecimal currentCostPrice = line.getCurrentCostPriceForCostAdjustment();
+//						if (currentCostPrice != null && currentCostPrice.compareTo(currentCost) != 0) {
+//							m_processMsg = "Current Cost for Line " + line.getLine() + " have changed.";
+//							return DocAction.STATUS_Invalid; 
+//						}
 					}
 				}
 	

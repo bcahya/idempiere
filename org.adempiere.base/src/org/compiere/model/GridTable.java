@@ -453,6 +453,28 @@ public class GridTable extends AbstractTableModel
 		{
 			m_SQL = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL, 
 				m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+			
+			//[PSI] - 7613 (Document Type Access)
+			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
+				MTable t = MTable.get(m_ctx, m_tableName);
+				String colDT = "";
+				if (t.columnExists(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
+					colDT = MOrder.COLUMNNAME_C_DocTypeTarget_ID;
+				} else if (t.columnExists(MOrder.COLUMNNAME_C_DocType_ID)) {
+					colDT = MOrder.COLUMNNAME_C_DocType_ID;
+				}
+				if (!colDT.equalsIgnoreCase("")) {
+					m_SQL += 
+							" AND "+m_tableName+"."+colDT
+							+ " IN (SELECT C_DocType_ID " 
+						      + "FROM SIS_RoleDocType " 
+						      + "WHERE AD_Role_ID=" 
+						      + Env.getAD_Role_ID(m_ctx)
+						      + " AND ISActive = 'Y' " 
+						      + ")";
+				}
+			}
+			
 			m_SQL_Count = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL_Count, 
 				m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 		}

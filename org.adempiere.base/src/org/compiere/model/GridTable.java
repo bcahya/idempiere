@@ -457,21 +457,24 @@ public class GridTable extends AbstractTableModel
 			//[PSI] - 7613 (Document Type Access)
 			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
 				MTable t = MTable.get(m_ctx, m_tableName);
-				String colDT = "";
-				if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
-					colDT = MOrder.COLUMNNAME_C_DocTypeTarget_ID;
-				} else if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocType_ID)) {
-					colDT = MOrder.COLUMNNAME_C_DocType_ID;
-				}
-				if (!colDT.equalsIgnoreCase("")) {
-					m_SQL += 
-							" AND "+m_tableName+"."+colDT
-							+ " IN (SELECT C_DocType_ID " 
-						      + "FROM SIS_RoleDocType " 
-						      + "WHERE AD_Role_ID=" 
-						      + Env.getAD_Role_ID(m_ctx)
-						      + " AND ISActive = 'Y' " 
-						      + ")";
+				if (t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
+						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) {
+					String colDT = "";
+					if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
+						colDT = MOrder.COLUMNNAME_C_DocTypeTarget_ID;
+					} else if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocType_ID)) {
+						colDT = MOrder.COLUMNNAME_C_DocType_ID;
+					}
+					if (!colDT.equalsIgnoreCase("")) {
+						m_SQL += 
+								" AND "+m_tableName+"."+colDT
+								+ " IN (SELECT C_DocType_ID " 
+							      + "FROM SIS_RoleDocType " 
+							      + "WHERE AD_Role_ID=" 
+							      + Env.getAD_Role_ID(m_ctx)
+							      + " AND ISActive = 'Y' " 
+							      + ")";
+					}
 				}
 			}
 			

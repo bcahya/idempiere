@@ -458,9 +458,9 @@ public class GridTable extends AbstractTableModel
 			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
 				MTable t = MTable.get(m_ctx, m_tableName);
 				String colDT = "";
-				if (t.columnExists(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
+				if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
 					colDT = MOrder.COLUMNNAME_C_DocTypeTarget_ID;
-				} else if (t.columnExists(MOrder.COLUMNNAME_C_DocType_ID)) {
+				} else if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocType_ID)) {
 					colDT = MOrder.COLUMNNAME_C_DocType_ID;
 				}
 				if (!colDT.equalsIgnoreCase("")) {

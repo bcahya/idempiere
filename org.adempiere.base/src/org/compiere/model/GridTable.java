@@ -456,8 +456,10 @@ public class GridTable extends AbstractTableModel
 			
 			//[PSI] - 7613 (Document Type Access)
 			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
+				MRole r = MRole.get(m_ctx, Env.getAD_Role_ID(m_ctx));
 				MTable t = MTable.get(m_ctx, m_tableName);
-				if (t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
+				if (!r.get_ValueAsBoolean("SIS_IsIgnoreDocTypeAccess")
+						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
 						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) {
 					String colDT = "";
 					if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
@@ -471,7 +473,7 @@ public class GridTable extends AbstractTableModel
 								+ " IN (SELECT C_DocType_ID " 
 							      + "FROM SIS_RoleDocType " 
 							      + "WHERE AD_Role_ID=" 
-							      + Env.getAD_Role_ID(m_ctx)
+							      + r.get_ID()
 							      + " AND ISActive = 'Y' " 
 							      + ")";
 					}

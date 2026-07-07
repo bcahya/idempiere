@@ -454,10 +454,12 @@ public class GridTable extends AbstractTableModel
 			m_SQL = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL, 
 				m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 			
+			//SIS Access
+			MRole r = MRole.get(m_ctx, Env.getAD_Role_ID(m_ctx));
+			MTable t = MTable.get(m_ctx, m_tableName);
+			
 			//[PSI] - 7613 (Document Type Access)
 			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
-				MRole r = MRole.get(m_ctx, Env.getAD_Role_ID(m_ctx));
-				MTable t = MTable.get(m_ctx, m_tableName);
 				if (!r.get_ValueAsBoolean("SIS_IsIgnoreDocTypeAccess")
 						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
 						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) {
@@ -476,6 +478,31 @@ public class GridTable extends AbstractTableModel
 							      + r.get_ID()
 							      + " AND ISActive = 'Y' " 
 							      + ")";
+					}
+				}
+			}
+			
+			//[PSI] - 7622 (Warehouse Access)
+			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnWarehouseAccess", false, getAD_Client_ID())) {
+				if (!r.get_ValueAsBoolean("SIS_IsIgnoreWarehouseAccess")
+						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
+						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) {
+					List<String> whs = new ArrayList<String>();
+					if (t.columnExistsInDB(MMovement.COLUMNNAME_M_Warehouse_ID)) {
+						whs.add(MOrder.COLUMNNAME_M_Warehouse_ID);
+					}
+					if (t.columnExistsInDB(MMovement.COLUMNNAME_M_WarehouseTo_ID)) {
+						whs.add(MMovement.COLUMNNAME_M_WarehouseTo_ID);
+					}
+					for (String colWH: whs) {
+						m_SQL += 
+								" AND "+m_tableName+"."+colWH
+								+ " IN (SELECT m_warehouse_id " 
+							      + "FROM SIS_RoleWarehouse " 
+							      + "WHERE AD_Role_ID=" 
+							      + r.get_ID()
+							      + " AND ISActive = 'Y' " 
+							      + ") ";
 					}
 				}
 			}

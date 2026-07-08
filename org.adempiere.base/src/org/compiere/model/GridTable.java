@@ -452,11 +452,14 @@ public class GridTable extends AbstractTableModel
 		if (m_withAccessControl)
 		{
 			m_SQL = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL, 
-				m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+					m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
+			m_SQL_Count = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL_Count, 
+			m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 			
 			//SIS Access
 			MRole r = MRole.get(m_ctx, Env.getAD_Role_ID(m_ctx));
 			MTable t = MTable.get(m_ctx, m_tableName);
+			String sqlAdd = "";
 			
 			//[PSI] - 7613 (Document Type Access)
 			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
@@ -470,7 +473,7 @@ public class GridTable extends AbstractTableModel
 						colDT = MOrder.COLUMNNAME_C_DocType_ID;
 					}
 					if (!colDT.equalsIgnoreCase("")) {
-						m_SQL += 
+						sqlAdd += 
 								" AND "+m_tableName+"."+colDT
 								+ " IN (SELECT C_DocType_ID " 
 							      + "FROM SIS_RoleDocType " 
@@ -495,7 +498,7 @@ public class GridTable extends AbstractTableModel
 						whs.add(MMovement.COLUMNNAME_M_WarehouseTo_ID);
 					}
 					for (String colWH: whs) {
-						m_SQL += 
+						sqlAdd += 
 								" AND "+m_tableName+"."+colWH
 								+ " IN (SELECT m_warehouse_id " 
 							      + "FROM SIS_RoleWarehouse " 
@@ -506,9 +509,9 @@ public class GridTable extends AbstractTableModel
 					}
 				}
 			}
+			m_SQL += sqlAdd;
+			m_SQL_Count += sqlAdd;
 			
-			m_SQL_Count = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL_Count, 
-				m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 		}
 
 		//	ORDER BY

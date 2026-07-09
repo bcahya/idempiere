@@ -62,6 +62,7 @@ import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.compiere.util.ValueNamePair;
 import org.idempiere.db.util.SQLFragment;
+import org.idempiere.util.SIS_Utils;
 
 /**
  *	Grid Table Model for JDBC table access, including buffering.
@@ -456,61 +457,12 @@ public class GridTable extends AbstractTableModel
 			m_SQL_Count = MRole.getDefault(m_ctx, false).addAccessSQL(m_SQL_Count, 
 			m_tableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 			
-			//SIS Access
-			MRole r = MRole.get(m_ctx, Env.getAD_Role_ID(m_ctx));
-			MTable t = MTable.get(m_ctx, m_tableName);
-			String sqlAdd = "";
-			
-			//[PSI] - 7613 (Document Type Access)
-			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, getAD_Client_ID())) {
-				if (!r.get_ValueAsBoolean("SIS_IsIgnoreDocTypeAccess")
-						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
-						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) {
-					String colDT = "";
-					if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
-						colDT = MOrder.COLUMNNAME_C_DocTypeTarget_ID;
-					} else if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocType_ID)) {
-						colDT = MOrder.COLUMNNAME_C_DocType_ID;
-					}
-					if (!colDT.equalsIgnoreCase("")) {
-						sqlAdd += 
-								" AND "+m_tableName+"."+colDT
-								+ " IN (SELECT C_DocType_ID " 
-							      + "FROM SIS_RoleDocType " 
-							      + "WHERE AD_Role_ID=" 
-							      + r.get_ID()
-							      + " AND ISActive = 'Y' " 
-							      + ")";
-					}
-				}
+			//[PSI] - Role Access
+			String sqlAdd = SIS_Utils.getSQLAccess(m_tableName, true);
+			if (!sqlAdd.isEmpty()) {
+				m_SQL += sqlAdd;
+				m_SQL_Count += sqlAdd;
 			}
-			
-			//[PSI] - 7622 (Warehouse Access)
-			if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnWarehouseAccess", false, getAD_Client_ID())) {
-				if (!r.get_ValueAsBoolean("SIS_IsIgnoreWarehouseAccess")
-						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
-						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) {
-					List<String> whs = new ArrayList<String>();
-					if (t.columnExistsInDB(MMovement.COLUMNNAME_M_Warehouse_ID)) {
-						whs.add(MOrder.COLUMNNAME_M_Warehouse_ID);
-					}
-					if (t.columnExistsInDB(MMovement.COLUMNNAME_M_WarehouseTo_ID)) {
-						whs.add(MMovement.COLUMNNAME_M_WarehouseTo_ID);
-					}
-					for (String colWH: whs) {
-						sqlAdd += 
-								" AND "+m_tableName+"."+colWH
-								+ " IN (SELECT m_warehouse_id " 
-							      + "FROM SIS_RoleWarehouse " 
-							      + "WHERE AD_Role_ID=" 
-							      + r.get_ID()
-							      + " AND ISActive = 'Y' " 
-							      + ") ";
-					}
-				}
-			}
-			m_SQL += sqlAdd;
-			m_SQL_Count += sqlAdd;
 			
 		}
 

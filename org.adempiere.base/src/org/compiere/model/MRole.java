@@ -49,6 +49,7 @@ import org.compiere.wf.MWorkflow;
 import org.compiere.wf.MWorkflowAccess;
 import org.idempiere.cache.ImmutablePOSupport;
 import org.idempiere.cache.POCopyCache;
+import org.idempiere.util.SIS_Utils;
 
 /**
  *	Role Model.<br/>
@@ -2235,7 +2236,10 @@ public final class MRole extends X_AD_Role implements ImmutablePOSupport
 			whereColumnName = getDependentRecordWhereColumn (mainSql, columnName);
 		}	//	for all dependent records
 		retSQL.append(getDependentAccess(whereColumnName, includes, excludes));
-		//
+		
+		//[PSI] - add sql access
+		retSQL.append(SIS_Utils.getSQLAccess(TableNameIn, false));
+		
 		retSQL.append(orderBy);
 		if (log.isLoggable(Level.FINEST)) log.finest(retSQL.toString());
 		return retSQL.toString();

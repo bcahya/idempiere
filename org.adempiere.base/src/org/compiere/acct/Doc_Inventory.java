@@ -308,6 +308,16 @@ public class Doc_Inventory extends Doc
 						else
 						{
 							costs = line.getProductCosts(as, line.getAD_Org_ID(), true, "M_InventoryLine_ID=?");
+							
+							//[PSI] - 7619
+							if (costs == null || costs.signum() == 0) {
+								ICostInfo ci = product.getCostInfo(as, 0, line.getM_AttributeSetInstance_ID(),
+										product.getCostingMethod(as), getDateAcct());
+								if (ci != null) {
+									costs = ci.getCurrentCostPrice();
+								}
+							}
+							
 						}
 					} 
 					else

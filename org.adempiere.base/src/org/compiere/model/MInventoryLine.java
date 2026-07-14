@@ -505,14 +505,18 @@ public class MInventoryLine extends X_M_InventoryLine
 		}
 		int AD_Org_ID = getAD_Org_ID();
 		int M_AttributeSetInstance_ID = getM_AttributeSetInstance_ID();
-		if (MAcctSchema.COSTINGLEVEL_Client.equals(as.getCostingLevel()))
+		
+		//[PSI] - 7619 fixing costing method
+		MProduct p = (MProduct)getProduct();
+		String costingLevel = p.getCostingLevel(as);
+		if (MAcctSchema.COSTINGLEVEL_Client.equals(costingLevel))
 		{
 			AD_Org_ID = 0;
 			M_AttributeSetInstance_ID = 0;
 		}
-		else if (MAcctSchema.COSTINGLEVEL_Organization.equals(as.getCostingLevel()))
+		else if (MAcctSchema.COSTINGLEVEL_Organization.equals(costingLevel))
 			M_AttributeSetInstance_ID = 0;
-		else if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(as.getCostingLevel()))
+		else if (MAcctSchema.COSTINGLEVEL_BatchLot.equals(costingLevel))
 			AD_Org_ID = 0;
 		MCostElement ce = MCostElement.getMaterialCostElement(getCtx(), inventory.getCostingMethod(), AD_Org_ID);
 		

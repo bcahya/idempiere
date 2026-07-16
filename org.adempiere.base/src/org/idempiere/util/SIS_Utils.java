@@ -62,9 +62,6 @@ public class SIS_Utils {
 			if (t.columnExistsInDB(MMovement.COLUMNNAME_M_Warehouse_ID)) {
 				whs.add(MOrder.COLUMNNAME_M_Warehouse_ID);
 			}
-			if (t.columnExistsInDB(MMovement.COLUMNNAME_M_WarehouseTo_ID)) {
-				whs.add(MMovement.COLUMNNAME_M_WarehouseTo_ID);
-			}
 			for (String colWH: whs) {
 				sqlAdd += 
 						" AND "+m_tableName+"."+colWH

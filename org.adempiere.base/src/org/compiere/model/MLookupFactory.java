@@ -32,6 +32,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Language;
 import org.compiere.util.Util;
 import org.idempiere.db.util.SQLFragment;
+import org.idempiere.util.SIS_Utils;
 
 /**
  * Factory to create MLookup instance.
@@ -269,7 +270,10 @@ public class MLookupFactory
 		if (needToAddSecurity)
 			info.Query = MRole.getDefault(ctx, false).addAccessSQL(info.Query,
 				info.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
-
+		
+		//[PSI] - add access sql
+		info.Query = info.Query += SIS_Utils.getSQLAccess(info.TableName, false);
+		
 		return info;
 	}	//	getLookupInfo
 

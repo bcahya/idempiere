@@ -428,12 +428,10 @@ public class MInventory extends X_M_Inventory implements DocAction
 								qtyma = qtyma.add(ma.getMovementQty());
 							}
 						}
-						
-						//[PSI] - 7690 comment validasi
-//						if (qtyma.subtract(qtyDiff).signum() != 0) {
-//							m_processMsg = "@Line@ " + line.getLine() + ": @FillMandatory@ @M_AttributeSetInstance_ID@";
-//							return DocAction.STATUS_Invalid;
-//						}
+						if (qtyma.subtract(qtyDiff).signum() != 0) {
+							m_processMsg = "@Line@ " + line.getLine() + ": @FillMandatory@ @M_AttributeSetInstance_ID@";
+							return DocAction.STATUS_Invalid;
+						}
 					}
 				}
 			}	//	No ASI

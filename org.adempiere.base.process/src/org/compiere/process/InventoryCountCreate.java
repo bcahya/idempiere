@@ -30,6 +30,7 @@ import org.compiere.model.MInventory;
 import org.compiere.model.MInventoryLine;
 import org.compiere.model.MInventoryLineMA;
 import org.compiere.model.MProcessPara;
+import org.compiere.model.Query;
 import org.compiere.util.AdempiereSystemError;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -235,8 +236,13 @@ public class InventoryCountCreate extends SvrProcess
 		            || (p_QtyRange.equals("=") && compare == 0)
 		            || (p_QtyRange.equals("N") && compare != 0))
 		        {
-					count += createInventoryLine (M_Locator_ID, M_Product_ID, 
-						M_AttributeSetInstance_ID, QtyOnHand, M_AttributeSet_ID,dateMpolicy);
+		        	//[PSI] - 7690
+		        	if (M_AttributeSet_ID == 0) {
+						count += createInventoryLine (M_Locator_ID, M_Product_ID, 
+							M_AttributeSetInstance_ID, QtyOnHand, M_AttributeSet_ID,dateMpolicy);
+		        	} else {
+		        		count += createInventoryLinePSI(M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, QtyOnHand);
+		        	}
 		        }
 			}
 		}
@@ -265,6 +271,26 @@ public class InventoryCountCreate extends SvrProcess
 		StringBuilder msgreturn = new StringBuilder("@M_InventoryLine_ID@ - #").append(count);
 		return msgreturn.toString();
 	}	//	doIt
+	
+	//[PSI] - 7690
+	int createInventoryLinePSI (int M_Locator_ID, int M_Product_ID, 
+			int M_AttributeSetInstance_ID, BigDecimal QtyOnHand)
+	{
+		int result = 0;
+		MInventoryLine il = new Query(getCtx(), MInventoryLine.Table_Name,
+				"m_locator_id=? and m_product_id=? and m_attributesetinstance_id=? and m_inventory_id=?", get_TrxName())
+				.setParameters(M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, m_inventory.get_ID())
+				.setOnlyActiveRecords(true).first();
+		if (il != null) {
+			il.setQtyCount(il.getQtyCount().add(QtyOnHand));
+			il.setQtyBook(il.getQtyBook().add(QtyOnHand));
+		} else {
+			il = new MInventoryLine(m_inventory, M_Locator_ID, M_Product_ID, M_AttributeSetInstance_ID, QtyOnHand, QtyOnHand);
+			result = 1;
+		}
+		il.saveEx();
+		return result;
+	}
 	
 	/**
 	 * 	Create/Add to Inventory Line

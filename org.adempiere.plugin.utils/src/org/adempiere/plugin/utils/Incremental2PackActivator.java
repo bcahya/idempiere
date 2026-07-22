@@ -366,7 +366,7 @@ public class Incremental2PackActivator extends AbstractActivator {
 						sql.append(line).append("\n");
 					}
 				}
-				DB.executeUpdate(sql.toString(), null);
+				DB.executeUpdateEx(sql.toString(), null);
 				
 //				String[] statements = sql.toString().split(";");
 //				for (String statement : statements) {

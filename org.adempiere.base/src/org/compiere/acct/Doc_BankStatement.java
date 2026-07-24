@@ -109,6 +109,18 @@ public class Doc_BankStatement extends Doc
 			if(line.isActive())
 			{
 				DocLine_Bank docLine = new DocLine_Bank(line, this);
+				
+				//[PSI] - 7711
+				if (line.getC_Payment_ID() > 0) {
+					MPayment p = (MPayment)line.getC_Payment();
+					if (p.getC_ConversionType_ID() > 0) {
+						docLine.setC_ConversionType_ID(p.getC_ConversionType_ID());
+					}
+					if (p.isOverrideCurrencyRate() && p.getCurrencyRate().signum() > 0) {
+						docLine.setCurrencyRate(p.getCurrencyRate());
+					}
+				}
+				
 				list.add(docLine);
 			}
 		}

@@ -466,13 +466,18 @@ public class MAllocationHdr extends X_C_AllocationHdr implements DocAction
 					return DocAction.STATUS_Invalid;
 				}
 			}
-			if (line.getC_Payment_ID() > 0) {
-				MPayment payment = new MPayment(getCtx(), line.getC_Payment_ID(), get_TrxName());
-				if (payment.getDateAcct().after(getDateAcct())) {
-					m_processMsg = "Wrong allocation date";
-					return DocAction.STATUS_Invalid;
+			
+			//[PSI] - 7716
+			if (!Env.getContext(p_ctx, "#PSI_IsReversal").equalsIgnoreCase("Y")) {
+				if (line.getC_Payment_ID() > 0) {
+					MPayment payment = new MPayment(getCtx(), line.getC_Payment_ID(), get_TrxName());
+					if (payment.getDateAcct().after(getDateAcct())) {
+						m_processMsg = "Wrong allocation date";
+						return DocAction.STATUS_Invalid;
+					}
 				}
 			}
+			
 		}
 		setApprovalAmt(approval);
 		//

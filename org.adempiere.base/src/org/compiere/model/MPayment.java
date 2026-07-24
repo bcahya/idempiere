@@ -2826,6 +2826,10 @@ public class MPayment extends X_C_Payment
 		reversal.saveEx(get_TrxName());
 
 		//	Unlink & De-Allocate
+		
+		//[PSI] - 7716
+		Env.setContext(p_ctx, "#PSI_IsReversal", "Y");
+		
 		deAllocate(accrual);
 		setIsAllocated (true);	//	the allocation below is overwritten
 		//	Set Status 

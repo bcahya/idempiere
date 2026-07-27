@@ -172,6 +172,12 @@ public class GLJournalGenerate extends SvrProcess
 
 				if (line.isSameProduct())
 					groupColumns.add("M_Product_ID");
+				
+				//[PSI] - 7722
+				if (line.get_ValueAsBoolean("SIS_IsSameAccount")) {
+					groupColumns.add("Account_ID");
+				}
+				
 			}
 			String groupBy = "";
 			for (String column : groupColumns) {
@@ -287,6 +293,12 @@ public class GLJournalGenerate extends SvrProcess
 					columnsOut.add("C_BPartner_ID");
 				if (line.isSameProduct())
 					columnsOut.add("M_Product_ID");
+				
+				//[PSI] - 7722
+				if (line.get_ValueAsBoolean("SIS_IsSameAccount")) {
+					columnsOut.add("Account_ID");
+				}
+				
 			}
 
 			for (int i = 0; i < listDim.size(); i++) {
@@ -315,6 +327,12 @@ public class GLJournalGenerate extends SvrProcess
 						if (line.isSameProduct()) {
 							dimensionsOut.add(dimensions.get(groupColumns.indexOf("M_Product_ID")));
 						}
+						
+						//[PSI] - 7722
+						if (line.get_ValueAsBoolean("SIS_IsSameAccount")) {
+							dimensionsOut.add(dimensions.get(groupColumns.indexOf("Account_ID")));
+						}
+						
 					}
 
 					if (line.getC_ElementValueDR_ID() > 0) {
@@ -335,7 +353,8 @@ public class GLJournalGenerate extends SvrProcess
 						listLinesOut.add(line);
 						totalAmount = totalAmount.subtract(amount);
 					}
-					if (line.getC_ElementValueDR_ID() == 0 && line.getC_ElementValueCR_ID() == 0 && line.isCopyAllDimensions()) {
+					if (line.getC_ElementValueDR_ID() == 0 && line.getC_ElementValueCR_ID() == 0
+							&& (line.isCopyAllDimensions() || line.get_ValueAsBoolean("SIS_IsSameAccount"))) { //[PSI] - 7722
 						int accountId = dimensions.get(groupColumns.indexOf("Account_ID"));
 						listAccountOut.add(accountId);
 						if (amount.signum() > 0) {

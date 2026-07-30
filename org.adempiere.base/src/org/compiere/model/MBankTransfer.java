@@ -50,6 +50,10 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 	 */
 	private static final long serialVersionUID = -6091468617167291836L;
 
+	//[PSI] - 7724
+	public static final String SIS_BANKTRANSFER_CHARGE_ID = "SIS_BANKTRANSFER_CHARGE_ID";
+	public static final String SIS_BANKTRANSFER_BP_ID = "SIS_BANKTRANSFER_BP_ID";
+	
     /**
      * UUID based Constructor
      * @param ctx  Context
@@ -199,6 +203,11 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		return true;
 	}
 
+	//[PSI] - 7724
+	public int getC_DocType_ID() {
+		return get_ValueAsInt("C_DocType_ID");
+	}
+	
 	@Override
 	public String prepareIt() {
 		if (log.isLoggable(Level.INFO)) log.info(toString());
@@ -206,6 +215,28 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;
 
+		//[PSI] - 7724
+		int chargeID = MSysConfig.getIntValue(SIS_BANKTRANSFER_CHARGE_ID, 0, getAD_Client_ID());
+		int bpID = MSysConfig.getIntValue(SIS_BANKTRANSFER_BP_ID, 0, getAD_Client_ID());
+		if (chargeID <= 0 ) {
+			m_processMsg = "System Configurator SIS_BANKTRANSFER_CHARGE_ID not configured yet!";
+		} else if (bpID <= 0 ) {
+			m_processMsg = "System Configurator SIS_BANKTRANSFER_BP_ID not configured yet!";
+		} else if (getC_DocType_ID() <= 0) {
+			m_processMsg = "Please fill Document Type!";
+		}
+		MDocType dt = MDocType.get(getC_DocType_ID());
+		int docTypeAPID = dt.get_ValueAsInt("SIS_DocTypeBTAPPayment_ID");
+		int docTypeARID = dt.get_ValueAsInt("SIS_DocTypeBTARReceipt_ID");
+		if (docTypeAPID <= 0 ) {
+			m_processMsg = "Document Type for AP Payment not configured yet!";
+		} else if (docTypeARID <= 0 ) {
+			m_processMsg = "Document Type for AR Receipt not configured yet!";
+		}
+		
+		if (m_processMsg != null)
+			return DocAction.STATUS_Invalid;
+		
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_AFTER_PREPARE);
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;
@@ -237,6 +268,13 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 				return status;
 		}
 
+		//[PSI] - 7724
+		int chargeID = MSysConfig.getIntValue(SIS_BANKTRANSFER_CHARGE_ID, 0, getAD_Client_ID());
+		int bpID = MSysConfig.getIntValue(SIS_BANKTRANSFER_BP_ID, 0, getAD_Client_ID());
+		MDocType dt = MDocType.get(getC_DocType_ID());
+		int docTypeAPID = dt.get_ValueAsInt("SIS_DocTypeBTAPPayment_ID");
+		int docTypeARID = dt.get_ValueAsInt("SIS_DocTypeBTARReceipt_ID");
+		
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;
@@ -251,14 +289,14 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		paymentBankFrom.setDocumentNo(getDocumentNo());
 		paymentBankFrom.setDateAcct(getDateAcct());
 		paymentBankFrom.setDateTrx(getPayDate());
-		paymentBankFrom.setTenderType(getFrom_TenderType());
+//		paymentBankFrom.setTenderType(getFrom_TenderType());
 		paymentBankFrom.setDescription(getDescription());
-		paymentBankFrom.setC_BPartner_ID(getTo_C_BPartner_ID());
+		paymentBankFrom.setC_BPartner_ID(bpID);
 		paymentBankFrom.setC_Currency_ID(getFrom_C_Currency_ID());
 		paymentBankFrom.setPayAmt(getFrom_Amt());
 		paymentBankFrom.setOverUnderAmt(Env.ZERO);
-		paymentBankFrom.setC_DocType_ID(false);
-		paymentBankFrom.setC_Charge_ID(getFrom_C_Charge_ID());
+		paymentBankFrom.setC_DocType_ID(docTypeAPID);
+		paymentBankFrom.setC_Charge_ID(chargeID);
 		if (as.getC_Currency_ID() != getFrom_C_Currency_ID()) {
 			paymentBankFrom.setC_ConversionType_ID(getC_ConversionType_ID());
 			paymentBankFrom.setIsOverrideCurrencyRate(isOverrideCurrencyRate());
@@ -281,14 +319,14 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		paymentBankTo.setDocumentNo(getDocumentNo());
 		paymentBankTo.setDateAcct(getDateAcct());
 		paymentBankTo.setDateTrx(getPayDate());
-		paymentBankTo.setTenderType(getTo_TenderType());
+//		paymentBankTo.setTenderType(getTo_TenderType());
 		paymentBankTo.setDescription(getDescription());
-		paymentBankTo.setC_BPartner_ID(getFrom_C_BPartner_ID());
+		paymentBankTo.setC_BPartner_ID(bpID);
 		paymentBankTo.setC_Currency_ID(getTo_C_Currency_ID());
 		paymentBankTo.setPayAmt(getTo_Amt());
 		paymentBankTo.setOverUnderAmt(Env.ZERO);
-		paymentBankTo.setC_DocType_ID(true);
-		paymentBankTo.setC_Charge_ID(getTo_C_Charge_ID());
+		paymentBankTo.setC_DocType_ID(docTypeARID);
+		paymentBankTo.setC_Charge_ID(chargeID);
 		if (as.getC_Currency_ID() != getTo_C_Currency_ID()) {
 			paymentBankTo.setC_ConversionType_ID(getC_ConversionType_ID());
 			paymentBankTo.setIsOverrideCurrencyRate(isOverrideCurrencyRate());

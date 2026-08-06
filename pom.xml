@@ -77,6 +77,7 @@
 		<module>../plugins/jpiere.plugin.webui.formwindow</module>
 		<module>../plugins/org.devcoffee.idempiere.s3storage</module>
 		<module>../plugins/jpiere.plugin.delete</module>
+		<module>../sis_plugin_test/id.sistematika.test</module>
     <module>org.idempiere.bouncy.castle-feature</module>
     <module>coverage-report</module>
 	</modules>

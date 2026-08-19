@@ -491,7 +491,17 @@ public class GridTabCSVExporter implements IGridTabExporter
 				// Hardcoded / do not check for Value on AD_Org, AD_User and AD_Ref_List, must use name for these two tables
 				if ("AD_Element".equals(foreignTable)){
 					name.append("[ColumnName]"); // ColumnName is unique value IDEMPIERE-3375
-				}else if (! ("AD_Org".equals(foreignTable) || "AD_User".equals(foreignTable)) && fTable.getColumn("Value") != null) {
+				} 
+				
+				//[PSI] - 7917
+				else if (fTable.getColumn("LineNo") != null) {
+					name.append("[LineNo]");
+				}
+				else if (fTable.getColumn("Line") != null) {
+					name.append("[Line]");
+				}
+				
+				else if (! ("AD_Org".equals(foreignTable) || "AD_User".equals(foreignTable)) && fTable.getColumn("Value") != null) {
 					name.append("[Value]"); // fully qualified
 				} else if (fTable.getColumn("Name") != null) {
 					name.append("[Name]");

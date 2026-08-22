@@ -90,8 +90,7 @@ public class SIS_Utils {
 				+ "from m_product_acct pa "
 				+ "inner join c_validcombination vc "
 				+ "	on vc.c_validcombination_id = pa.p_asset_acct "
-				+ "where pa.m_product_id = 'Y' "
-				+ "and pa.isactive = 'Y' "
+				+ "where pa.isactive = 'Y' "
 				+ "and pa.c_acctschema_id = ? "
 				+ "and pa.m_product_id = ? "
 				+ "fetch first 1 rows only ",

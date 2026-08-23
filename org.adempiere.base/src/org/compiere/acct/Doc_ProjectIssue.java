@@ -29,7 +29,9 @@ import org.compiere.model.MProject;
 import org.compiere.model.MProjectIssue;
 import org.compiere.model.MTimeExpenseLine;
 import org.compiere.model.ProductCost;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
+import org.idempiere.util.SIS_Utils;
 
 /**
  *	Posting for {@link MProjectIssue} document. DOCTYPE_ProjectIssue.<br/>
@@ -141,7 +143,9 @@ public class Doc_ProjectIssue extends Doc
 		if (m_issue.getM_InOutLine_ID() != 0)
 		{
 			MInOutLine inOutLine = new MInOutLine(getCtx(), m_issue.getM_InOutLine_ID(), getTrxName());
-			cost = inOutLine.getPOCost(as, m_line.getQty());
+			//[SIS] - 7937
+//			cost = inOutLine.getPOCost(as, m_line.getQty());
+			cost = SIS_Utils.getFactAmtMR(as.get_ID(), inOutLine);
 		}
 		else if (m_issue.getS_TimeExpenseLine_ID() != 0)
 		{

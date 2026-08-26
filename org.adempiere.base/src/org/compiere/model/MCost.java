@@ -1728,14 +1728,10 @@ public class MCost extends X_M_Cost implements ICostInfo
 		BigDecimal sumQty = getCurrentQty().add(qty);
 		if (sumQty.signum() != 0)
 		{
-			//[SIS] - 7979
-//			BigDecimal oldSum = getCurrentCostPrice().multiply(getCurrentQty());
-//			BigDecimal oldCost = oldSum.divide(sumQty, 12, RoundingMode.HALF_UP);
-//			BigDecimal newCost = amt.divide(sumQty, 12, RoundingMode.HALF_UP); //amt is total already
-//			BigDecimal cost = oldCost.add(newCost);
-			
 			BigDecimal oldSum = getCurrentCostPrice().multiply(getCurrentQty());
-			BigDecimal cost = (amt.add(oldSum)).divide(sumQty, 12, RoundingMode.HALF_UP);
+			BigDecimal oldCost = oldSum.divide(sumQty, 12, RoundingMode.HALF_UP);
+			BigDecimal newCost = amt.divide(sumQty, 12, RoundingMode.HALF_UP); //amt is total already
+			BigDecimal cost = oldCost.add(newCost);
 			if (cost.scale() > (getPrecision()*2))
 			{
 				cost = cost.setScale((getPrecision()*2), RoundingMode.HALF_UP);

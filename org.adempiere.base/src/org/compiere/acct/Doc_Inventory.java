@@ -515,6 +515,24 @@ public class Doc_Inventory extends Doc
 						return null;
 					}
 				}
+				
+				//[PSI] - 7984
+				if (!inventory.isPosted()) {
+					if (parentDocSubTypeInv.equalsIgnoreCase(MDocType.DOCSUBTYPEINV_CostAdjustment)) {
+						BigDecimal qtyCost = Env.ZERO;
+						MCostDetail cd = MCostDetail.getInventory(as, line.getM_Product_ID(), line.getM_AttributeSetInstance_ID(),
+								line.get_ID(), 0, getTrxName());
+						if (cd != null) {
+							qtyCost = cd.getCurrentQty();
+						}
+						if (qtyCost.signum() == 0) {
+							ICostInfo ci = product.getCostInfo(as, line.getAD_Org_ID(), line.getM_AttributeSetInstance_ID(),docCostingMethod, line.getDateAcct());
+							qtyCost = ci.getCurrentQty();
+						}
+						inventory.set_ValueNoCheck("SIS_CostCurrentQty", qtyCost);
+						inventory.saveEx();
+					}
+				}
 			}
 		}
 		//

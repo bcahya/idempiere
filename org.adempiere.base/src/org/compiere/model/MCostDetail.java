@@ -1511,10 +1511,14 @@ public class MCostDetail extends X_M_CostDetail
 					cd != null ? cd : this, get_TrxName());
 		if (costInfo != null)
 		{
-			cost.setCurrentQty(costInfo.getCurrentQty());
-			cost.setCurrentCostPrice(costInfo.getCurrentCostPrice());
-			cost.setCumulatedQty(costInfo.getCumulatedQty());
-			cost.setCumulatedAmt(costInfo.getCumulatedAmt());
+			// Bayu. #7979 Not set for average PO
+			if (!ce.isAveragePO()) {
+				cost.setCurrentQty(costInfo.getCurrentQty());
+				cost.setCurrentCostPrice(costInfo.getCurrentCostPrice());
+				cost.setCumulatedQty(costInfo.getCumulatedQty());
+				cost.setCumulatedAmt(costInfo.getCumulatedAmt());
+			}
+			// end Bayu #7979
 		}
 		
 		DB.getDatabase().forUpdate(cost, 120);

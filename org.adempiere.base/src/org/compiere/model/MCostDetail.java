@@ -1528,7 +1528,7 @@ public class MCostDetail extends X_M_CostDetail
 			MInventory i = new MInventory(getCtx(), il.getM_Inventory_ID(), get_TrxName());
 			MDocType dt = (MDocType)i.getC_DocType();
 			if (dt.getDocSubTypeInv().equalsIgnoreCase(MDocType.DOCSUBTYPEINV_CostAdjustment)) {
-				BigDecimal costCurrentQty = SIS_Utils.getBigDecimal(il.get_Value("SIS_CostCurrentQty"));
+				BigDecimal costCurrentQty = SIS_Utils.getBigDecimal(il.get_Value("SIS_CurrentQtyCost"));
 				if (costCurrentQty.signum() != 0 && i.isPosted()) {
 					cost.setCurrentQty(costCurrentQty);
 				}

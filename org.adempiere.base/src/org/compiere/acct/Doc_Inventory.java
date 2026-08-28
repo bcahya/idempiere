@@ -529,7 +529,7 @@ public class Doc_Inventory extends Doc
 							ICostInfo ci = product.getCostInfo(as, line.getAD_Org_ID(), line.getM_AttributeSetInstance_ID(),docCostingMethod, line.getDateAcct());
 							qtyCost = ci.getCurrentQty();
 						}
-						inventory.set_ValueNoCheck("SIS_CostCurrentQty", qtyCost);
+						inventory.set_ValueNoCheck("SIS_CurrentQtyCost", qtyCost);
 						inventory.saveEx();
 					}
 				}

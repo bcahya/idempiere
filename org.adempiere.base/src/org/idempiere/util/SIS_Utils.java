@@ -1,6 +1,7 @@
 package org.idempiere.util;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -113,6 +114,35 @@ public class SIS_Utils {
 				accountID
 		);
 		return amt == null ? Env.ZERO : amt.abs();
+	}
+	
+	public static BigDecimal getBigDecimal(Object value) {
+		BigDecimal ret = Env.ZERO;
+		if (value != null) {
+			if (value instanceof BigDecimal) {
+				ret = (BigDecimal) value;
+			} else if (value instanceof String) {
+				ret = new BigDecimal((String) value);
+			} else if (value instanceof BigInteger) {
+				ret = new BigDecimal((BigInteger) value);
+			} else if (value instanceof Double) {
+				ret = new BigDecimal((Double) value);
+			} else if (value instanceof Long) {
+				ret = new BigDecimal((Long) value);
+			} else if (value instanceof Number) {
+				ret = new BigDecimal(((Number) value).doubleValue());
+			} else if (value instanceof Integer) {
+				ret = new BigDecimal(((Integer) value).doubleValue());
+			} else {
+				throw new ClassCastException("Not possible to coerce [" + value + "] from class " + value.getClass()
+						+ " into a BigDecimal.");
+			}
+		}
+		return ret;
+	}
+
+	public static BigDecimal getBigDecimal(Object value, int scale) {
+		return getBigDecimal(value).setScale(scale, BigDecimal.ROUND_HALF_UP);
 	}
 	
 }

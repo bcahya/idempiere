@@ -37,6 +37,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
+import org.idempiere.util.SIS_Utils;
 
 /**
  * 	Cost Detail Model
@@ -1519,6 +1520,19 @@ public class MCostDetail extends X_M_CostDetail
 				cost.setCumulatedAmt(costInfo.getCumulatedAmt());
 			}
 			// end Bayu #7979
+		}
+		
+		//[PSI] - 7984
+		if (getM_InventoryLine_ID() > 0) {
+			MInventoryLine il = new MInventoryLine(getCtx(), getM_InventoryLine_ID(), get_TrxName());
+			MInventory i = new MInventory(getCtx(), il.getM_Inventory_ID(), get_TrxName());
+			MDocType dt = (MDocType)i.getC_DocType();
+			if (dt.getDocSubTypeInv().equalsIgnoreCase(MDocType.DOCSUBTYPEINV_CostAdjustment)) {
+				BigDecimal costCurrentQty = SIS_Utils.getBigDecimal(il.get_Value("SIS_CurrentQtyCost"));
+				if (i.isPosted()) {
+					cost.setCurrentQty(costCurrentQty);
+				}
+			}
 		}
 		
 		DB.getDatabase().forUpdate(cost, 120);

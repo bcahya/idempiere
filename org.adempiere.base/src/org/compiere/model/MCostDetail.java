@@ -37,6 +37,7 @@ import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.TimeUtil;
 import org.compiere.util.Util;
+import org.idempiere.util.SIS_Utils;
 
 /**
  * 	Cost Detail Model

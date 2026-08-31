@@ -40,6 +40,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.util.SIS_Utils;
 
 /**
  *  Post Inventory Documents.
@@ -274,6 +275,12 @@ public class Doc_Inventory extends Doc
 						orgId, ce.getM_CostElement_ID(), 
 						getDateAcct(), cd, getTrxName());
 				BigDecimal currentQty = cost.getCurrentQty();
+				//[PSI] - 7984
+				MInventoryLine il = new MInventoryLine(getCtx(), line.get_ID(), getTrxName());
+				BigDecimal costCurrentQty = SIS_Utils.getBigDecimal(il.get_Value("SIS_CurrentQtyCost"));
+				if (inventory.isPosted()) {
+					currentQty = costCurrentQty;
+				}
 				adjustmentDiff = costs;
 				costs = costs.multiply(currentQty);
 			}

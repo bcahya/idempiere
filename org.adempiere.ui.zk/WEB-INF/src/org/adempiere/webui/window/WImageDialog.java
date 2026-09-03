@@ -123,6 +123,7 @@ public class WImageDialog extends Window implements EventListener<Event>
 	private Panel parameterPanel = new Panel();
 	private Button fileButton = new Button();
 	private Button captureButton = new Button();
+	private Button deleteButton = new Button();
 	private Iframe image = new Iframe();
 	private ConfirmPanel confirmPanel = new ConfirmPanel(true,false,true,false,false,false);
 	private boolean cancel = false;
@@ -199,6 +200,9 @@ public class WImageDialog extends Window implements EventListener<Event>
 		LayoutUtils.addSclass("txt-btn", fileButton);
 		captureButton.setLabel("Capture");
 		LayoutUtils.addSclass("txt-btn", captureButton);
+		deleteButton.setLabel("Delete");
+		deleteButton.setStyle("background-color:red");
+		LayoutUtils.addSclass("txt-btn", deleteButton);
 		
 		North north = new North();
 		north.setParent(mainLayout);
@@ -211,6 +215,12 @@ public class WImageDialog extends Window implements EventListener<Event>
 		hbox.appendChild(new Space());
 		hbox.appendChild(captureButton);
 		hbox.appendChild(new Space());
+		
+		if(m_mImage != null) {			
+			hbox.appendChild(deleteButton);
+			hbox.appendChild(new Space());
+		}
+		
 		hbox.appendChild(fileNameTextbox);
 		
 		parameterPanel.setStyle("padding: 5px");
@@ -238,6 +248,7 @@ public class WImageDialog extends Window implements EventListener<Event>
 		fileButton.addEventListener(Events.ON_UPLOAD, this);
 		captureButton.addEventListener(Events.ON_CLICK, this);
 		confirmPanel.addActionListener(Events.ON_CLICK, this);
+		deleteButton.addEventListener(Events.ON_CLICK, this);
 		
 		addEventListener(Events.ON_UPLOAD, this);
 		addEventListener("onSave", this);
@@ -262,6 +273,7 @@ public class WImageDialog extends Window implements EventListener<Event>
 		}
 		else if (e.getTarget().getId().equals(ConfirmPanel.A_RESET))
 		{
+			
 			AImage img = null;
 			image.setContent(img);
 			image.setClientAttribute("sandbox", "");
@@ -326,6 +338,16 @@ public class WImageDialog extends Window implements EventListener<Event>
 				Clients.clearBusy(this);
 			}
 		}
+		else if (e.getTarget() == deleteButton) 
+		{			
+			m_mImage.setBinaryData(null);
+			m_mImage.setName("-");
+			image.setContent(null);
+			fileNameTextbox.setValue("-");
+			image.invalidate();
+			fileNameTextbox.invalidate();
+			
+		}
 	}
 
 	/**
@@ -354,6 +376,7 @@ public class WImageDialog extends Window implements EventListener<Event>
 		{
 			m_mImage.setBinaryData(null);
 			m_mImage.setName("-");
+			m_mImage.setImageURL("-");
 			m_mImage.saveEx();
 		}
 		detach();

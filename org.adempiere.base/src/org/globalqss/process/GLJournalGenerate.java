@@ -353,7 +353,8 @@ public class GLJournalGenerate extends SvrProcess
 						listLinesOut.add(line);
 						totalAmount = totalAmount.subtract(amount);
 					}
-					if (line.getC_ElementValueDR_ID() == 0 && line.getC_ElementValueCR_ID() == 0 && line.isCopyAllDimensions()) {
+					if (line.getC_ElementValueDR_ID() == 0 && line.getC_ElementValueCR_ID() == 0
+							&& (line.isCopyAllDimensions() || line.get_ValueAsBoolean("SIS_IsSameAccount"))) { //[PSI] - 7722
 						int accountId = dimensions.get(groupColumns.indexOf("Account_ID"));
 						listAccountOut.add(accountId);
 						if (amount.signum() > 0) {

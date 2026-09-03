@@ -34,6 +34,7 @@ import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
 import org.compiere.util.Util;
+import org.idempiere.util.SIS_Utils;
 
 /**
  * 	Project Issue Model
@@ -565,7 +566,9 @@ public class MProjectIssue extends X_C_ProjectIssue implements DocAction, DocOpt
 		if (getM_InOutLine_ID() > 0)
 		{
 			MInOutLine inOutLine = new MInOutLine(getCtx(), getM_InOutLine_ID(), get_TrxName());
-			cost = inOutLine.getPOCost(as, getMovementQty());
+			//[SIS] - 7937
+//			cost = inOutLine.getPOCost(as, getMovementQty());
+			cost = SIS_Utils.getFactAmtMR(as.get_ID(), inOutLine);
 		}
 		else if (getS_TimeExpenseLine_ID() > 0)
 		{

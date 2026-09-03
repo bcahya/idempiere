@@ -559,7 +559,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 		String url = Utils.getDynamicMediaURI(this, mediaVersion, media.getName(), media.getFormat());
 		String pdfJsUrl = AEnv.toPdfJsUrl(url);
 		iframe.setContent(null);
-		iframe.setSrc(pdfJsUrl);
+		iframe.setSrc(pdfJsUrl+"#toolbar=0&navpanes=0&scrollbar=0");
 	}
 
 	private void clearPreviewContainer() {
@@ -678,7 +678,7 @@ public class ZkJRViewer extends Window implements EventListener<Event>, ITabOnCl
 	 */
 	private void cmd_export()
 	{		
-		WReportExportDialog winExportFile = new WReportExportDialog(this);
+		SIS_WReportExportDialog winExportFile = new SIS_WReportExportDialog(this, m_printInfo);
 		winExportFile.setTitle(Msg.getMsg(Env.getCtx(), "Export") + ": " + getTitle());
 		winExportFile.setAttribute(Window.MODE_KEY, Window.MODE_HIGHLIGHTED);
 		AEnv.showWindow(winExportFile);

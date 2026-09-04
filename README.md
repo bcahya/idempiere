@@ -76,5 +76,5 @@ Follow our [Contribution Guide](https://github.com/idempiere/idempiere/blob/mast
 - 📘 [Wiki Documentation](https://wiki.idempiere.org/)
 - 📗 [Official Docusaurus Documentation](https://docs.idempiere.org/)
 - 🧭 [About iDempiere](https://www.idempiere.org/about/)
-- 🌟 [Solutions & Real-World Use Cases](https://idempiere.org/solutions/)
+- 🌟 [Solutions & Real-World Use Cases](https://idempiere.org/solutions/) 
 

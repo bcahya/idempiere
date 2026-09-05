@@ -209,6 +209,24 @@ public class MDistribution extends X_GL_Distribution
 				continue;
 			if (!distribution.isAnyAttributeSetInstance() && distribution.getM_AttributeSetInstance_ID() != M_AttributeSetInstance_ID)
 				continue;
+			
+			//[PSI] - 8061
+			if (!distribution.get_ValueAsBoolean("SIS_IsAnyBPGroup") && distribution.get_ValueAsInt("C_BP_Group_ID") > 0) {
+				boolean isSkip = true;
+				List<MBPartner> bps = new Query(distribution.getCtx(), MBPartner.Table_Name, "C_BP_Group_ID = ? ",
+						distribution.get_TrxName()).setParameters(distribution.get_ValueAsInt("C_BP_Group_ID"))
+						.setOnlyActiveRecords(true).list();
+				for (MBPartner bp: bps) {
+					if (bp.get_ID() == C_BPartner_ID) {
+						isSkip = false;
+						break;
+					}
+				}
+				if (isSkip) {
+					continue;
+				}
+			}
+			
 			//
 			list.add (distribution);
 		}	//	 for all distributions with acct

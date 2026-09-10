@@ -21,15 +21,17 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.logging.Level;
 
+import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
+import org.compiere.model.MCharge;
 import org.compiere.model.MCostDetail;
 import org.compiere.model.MInOutLine;
+import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MProduct;
 import org.compiere.model.MProject;
 import org.compiere.model.MProjectIssue;
 import org.compiere.model.MTimeExpenseLine;
 import org.compiere.model.ProductCost;
-import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.idempiere.util.SIS_Utils;
 
@@ -140,6 +142,11 @@ public class Doc_ProjectIssue extends Doc
 
 		//  Issue Cost
 		BigDecimal cost = null;
+		
+		//[PSI] - 8079
+		int invLineExpID = m_issue.get_ValueAsInt("SIS_InvoiceLineExp_ID");
+		MInvoiceLine il = new MInvoiceLine(getCtx(), invLineExpID, getTrxName());
+		
 		if (m_issue.getM_InOutLine_ID() != 0)
 		{
 			MInOutLine inOutLine = new MInOutLine(getCtx(), m_issue.getM_InOutLine_ID(), getTrxName());
@@ -152,6 +159,12 @@ public class Doc_ProjectIssue extends Doc
 			MTimeExpenseLine timeExpenseLine = new MTimeExpenseLine(getCtx(), m_issue.getS_TimeExpenseLine_ID(), getTrxName());
 			cost = timeExpenseLine.getLaborCost(as);
 		}
+		
+		//[PSI] - 8079
+		else if (il.get_ID() > 0) {
+			cost = SIS_Utils.getFactAmtInv(as.get_ID(), il);
+		}
+		
 		if (cost == null)	//	standard Product Costs
 			cost = m_line.getProductCosts(as, getAD_Org_ID(), false);
 
@@ -165,11 +178,16 @@ public class Doc_ProjectIssue extends Doc
 
 		//  Inventory               CR
 		acctType = ProductCost.ACCTTYPE_P_Asset;
-		if (product.isService())
+		if (product != null && product.isService())
 			acctType = ProductCost.ACCTTYPE_P_Expense;
-		cr = fact.createLine(m_line,
-			m_line.getAccount(acctType, as),
-			as.getC_Currency_ID(), null, cost);
+		
+		//[PSI] - 8079
+		MAccount acc = m_line.getAccount(acctType, as);
+		if (il.get_ID() > 0 && il.getC_Charge_ID() > 0) {
+			acc = MCharge.getAccount(il.getC_Charge_ID(), as);
+		}
+		cr = fact.createLine(m_line, acc, as.getC_Currency_ID(), null, cost);
+		
 		cr.setM_Locator_ID(m_line.getM_Locator_ID());
 		cr.setLocationFromLocator(m_line.getM_Locator_ID(), true);	// from Loc
 		//

@@ -575,6 +575,13 @@ public class MProjectIssue extends X_C_ProjectIssue implements DocAction, DocOpt
 			MTimeExpenseLine expenseLine = new MTimeExpenseLine(getCtx(), getS_TimeExpenseLine_ID(), get_TrxName());
 			cost = expenseLine.getLaborCost(as);
 		}
+		
+		//[PSI] - 8079
+		else if (get_ValueAsInt("SIS_InvoiceLineExp_ID") > 0) {
+			MInvoiceLine il = new MInvoiceLine(getCtx(), get_ValueAsInt("SIS_InvoiceLineExp_ID"), get_TrxName());
+			cost = SIS_Utils.getFactAmtInv(as.get_ID(), il);
+		}
+		
 		else
 		{
  			cost = MCost.getCost(	product, getM_AttributeSetInstance_ID(), as, getAD_Org_ID(), as.getCostingMethod(), getMovementQty(), 0, true, getMovementDate(), null,

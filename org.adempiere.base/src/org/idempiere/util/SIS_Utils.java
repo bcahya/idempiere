@@ -6,15 +6,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.compiere.model.MAcctSchema;
+import org.compiere.model.MCharge;
 import org.compiere.model.MDocType;
 import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
+import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MMovement;
 import org.compiere.model.MOrder;
+import org.compiere.model.MProduct;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.MWarehouse;
+import org.compiere.model.PO;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 
@@ -85,20 +90,32 @@ public class SIS_Utils {
 			int c_acctschema_id,
 			MInOutLine iol
 			) {
-		int accountID = DB.getSQLValueEx(iol.get_TrxName(),
-				"select "
-				+ "	vc.account_id::int "
-				+ "from m_product_acct pa "
-				+ "inner join c_validcombination vc "
-				+ "	on vc.c_validcombination_id = pa.p_asset_acct "
-				+ "where pa.isactive = 'Y' "
-				+ "and pa.c_acctschema_id = ? "
-				+ "and pa.m_product_id = ? "
-				+ "fetch first 1 rows only ",
-				c_acctschema_id,
-				iol.getM_Product_ID()
-		);
-		BigDecimal amt = DB.getSQLValueBDEx(iol.get_TrxName(),
+		int accountID = getProductAccountID(iol, "p_asset_acct", c_acctschema_id);
+		BigDecimal amt = getAmtAcct(iol, iol.getM_InOut_ID(), accountID, c_acctschema_id);
+		return amt == null ? Env.ZERO : amt.abs();
+	}
+	
+	public static BigDecimal getFactAmtInv(
+			int c_acctschema_id,
+			MInvoiceLine il
+			) {
+		int accountID = 0;
+		if (il.getM_Product_ID() > 0) {
+			accountID = getProductAccountID(il, "p_expense_acct", c_acctschema_id);
+		} else if (il.getC_Charge_ID() > 0){
+			MAcctSchema as = MAcctSchema.get(c_acctschema_id);
+			accountID = MCharge.getAccount(il.getC_Charge_ID(), as).getAccount_ID();
+		}
+		BigDecimal amt = getAmtAcct(il, il.getC_Invoice_ID(), accountID, c_acctschema_id);
+		return amt == null ? Env.ZERO : amt.abs();
+	}
+	
+	public static BigDecimal getAmtAcct(
+			PO po,
+			int parentID,
+			int accountID,
+			int c_acctschema_id) {
+		return DB.getSQLValueBDEx(po.get_TrxName(),
 				"select "
 				+ "	fa.amtacctdr - fa.amtacctcr amt "
 				+ "from fact_acct fa "
@@ -108,12 +125,30 @@ public class SIS_Utils {
 				+ "and fa.line_id = ? "
 				+ "and fa.account_id = ? "
 				+ "fetch first 1 rows only",
-				MInOut.Table_ID,
-				iol.getM_InOut_ID(),
-				iol.getM_InOutLine_ID(),
+				po.get_Table_ID(),
+				parentID,
+				po.get_ID(),
 				accountID
 		);
-		return amt == null ? Env.ZERO : amt.abs();
+	}
+	
+	public static int getProductAccountID(
+			PO po,
+			String colAcct,
+			int c_acctschema_id) {
+		return  DB.getSQLValueEx(po.get_TrxName(),
+				"select "
+				+ "	vc.account_id::int "
+				+ "from m_product_acct pa "
+				+ "inner join c_validcombination vc "
+				+ "	on vc.c_validcombination_id = pa."+colAcct+" "
+				+ "where pa.isactive = 'Y' "
+				+ "and pa.c_acctschema_id = ? "
+				+ "and pa.m_product_id = ? "
+				+ "fetch first 1 rows only ",
+				c_acctschema_id,
+				po.get_ValueAsInt(MProduct.COLUMNNAME_M_Product_ID)
+		);
 	}
 	
 	public static BigDecimal getBigDecimal(Object value) {

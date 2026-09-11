@@ -91,7 +91,7 @@ public class SIS_Utils {
 			MInOutLine iol
 			) {
 		int accountID = getProductAccountID(iol, "p_asset_acct", c_acctschema_id);
-		BigDecimal amt = getAmtAcct(iol, iol.getM_InOut_ID(), accountID, c_acctschema_id);
+		BigDecimal amt = getAmtAcct(iol, accountID, c_acctschema_id);
 		return amt == null ? Env.ZERO : amt.abs();
 	}
 	
@@ -106,15 +106,18 @@ public class SIS_Utils {
 			MAcctSchema as = MAcctSchema.get(c_acctschema_id);
 			accountID = MCharge.getAccount(il.getC_Charge_ID(), as).getAccount_ID();
 		}
-		BigDecimal amt = getAmtAcct(il, il.getC_Invoice_ID(), accountID, c_acctschema_id);
+		BigDecimal amt = getAmtAcct(il, accountID, c_acctschema_id);
 		return amt == null ? Env.ZERO : amt.abs();
 	}
 	
 	public static BigDecimal getAmtAcct(
 			PO po,
-			int parentID,
 			int accountID,
 			int c_acctschema_id) {
+		String tableHeader = po.get_TableName().replace("Line", "");
+		String colHeader = tableHeader +"_ID";
+		MTable tHeader = MTable.get(po.getCtx(), tableHeader);
+		int parentID = po.get_ValueAsInt(colHeader);
 		return DB.getSQLValueBDEx(po.get_TrxName(),
 				"select "
 				+ "	fa.amtacctdr - fa.amtacctcr amt "
@@ -125,7 +128,7 @@ public class SIS_Utils {
 				+ "and fa.line_id = ? "
 				+ "and fa.account_id = ? "
 				+ "fetch first 1 rows only",
-				po.get_Table_ID(),
+				tHeader.get_ID(),
 				parentID,
 				po.get_ID(),
 				accountID

@@ -72,7 +72,7 @@ public abstract class CreateFromDepositBatch extends CreateFromBatch
 	 */
 	@Override
 	protected Vector<Vector<Object>> getBankAccountData(Integer BankAccount, Integer BPartner, String DocumentNo, 
-			Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency)
+			Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency,String bgNumber)
 	{
 		Vector<Vector<Object>> data = new Vector<Vector<Object>>();
 		
@@ -84,7 +84,7 @@ public abstract class CreateFromDepositBatch extends CreateFromBatch
 		sql.append(" INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID)");
 		sql.append(" INNER JOIN C_Payment py ON (py.C_Payment_ID=p.C_Payment_ID)");
 		sql.append(" LEFT OUTER JOIN C_BPartner bp ON (p.C_BPartner_ID=bp.C_BPartner_ID) ");
-		sql.append(getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, AD_Org_ID));
+		sql.append(getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, AD_Org_ID,""));
 		
 		sql.append(" AND py.IsReconciled = 'N'");
 		sql.append(" AND p.DocStatus IN ('CO','CL') AND p.PayAmt<>0");
@@ -99,7 +99,7 @@ public abstract class CreateFromDepositBatch extends CreateFromBatch
 		try
 		{
 			pstmt = DB.prepareStatement(sql.toString(), getTrxName());
-			setParameters(pstmt, BankAccount, BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, AD_Org_ID);
+			setParameters(pstmt, BankAccount, BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, AD_Org_ID,"");
 			rs = pstmt.executeQuery();
 			while(rs.next())
 			{

@@ -169,7 +169,7 @@ public class CreateFromDepositBatchFormTest extends AbstractTestCase {
 				Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType,
 				String TenderType, String AuthCode, Integer C_Currency_ID) {
 			Vector<Vector<Object>> datas = super.getBankAccountData(BankAccount, BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType,
-					TenderType, AuthCode, C_Currency_ID);
+					TenderType, AuthCode, C_Currency_ID,"");
 			
 			for(int i = 0; i < datas.size(); i++) {
 				minitable.setRowCount(i+1);

@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -350,6 +351,8 @@ public class MSequence extends X_AD_Sequence
 		boolean isStartNewDay = seq.get_ValueAsBoolean("SIS_StartNewDay"); //[SIS] - add start new day
 		String dateColumn = seq.getDateColumn();
 		boolean isUseOrgLevel = seq.isOrgLevelSequence();
+		boolean isUseLocatorLevel = seq.get_ValueAsBoolean("SIS_isLocatorLevel"); //[SIS] - add locator level
+		String locatorColumn = seq.get_ValueAsString("SIS_LocatorColumn");
 		String orgColumn = seq.getOrgColumn();
 		int startNo = seq.getStartNo();
 		int incrementNo = seq.getIncrementNo();
@@ -376,6 +379,8 @@ public class MSequence extends X_AD_Sequence
 					.append("AND s.AD_Sequence_ID = ? ");
 			if (seq.isOrgLevelSequence())
 				selectSQL.append("AND y.AD_Org_ID = ? ");
+			if (seq.get_ValueAsBoolean("SIS_isLocatorLevel"))
+				selectSQL.append(" AND y.M_Locator_ID = ? ");
 			if (seq.isStartNewYear() || seq.isUsePrefixAsKey() || seq.isUseSuffixAsKey())
 				selectSQL.append("AND y.SequenceKey = ? ");
 			selectSQL.append("AND s.IsActive='Y' AND s.IsTableID='N' AND s.IsAutoSequence='Y' ")
@@ -417,7 +422,7 @@ public class MSequence extends X_AD_Sequence
 		String calendarYearMonth = NoYearNorMonth;
 		int docOrg_ID = 0;
 		int next = -1;
-
+		int docLocator_ID = 0;
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try
@@ -465,6 +470,14 @@ public class MSequence extends X_AD_Sequence
 					keyParts.setAD_Org_ID(docOrg_ID);
 				}
 			}
+			if (isUseLocatorLevel)
+			{
+				if (po != null && locatorColumn != null && locatorColumn.length() > 0)
+				{
+					docLocator_ID = po.get_ValueAsInt(locatorColumn);
+					keyParts.setM_Locator_ID(docLocator_ID);
+				}
+			}
 
 			pstmt = conn.prepareStatement(selectSQL.toString(),
 				ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_UPDATABLE);
@@ -473,6 +486,8 @@ public class MSequence extends X_AD_Sequence
 			if (seq.isSequenceNoLevel()) {
 				if (seq.isOrgLevelSequence())
 					pstmt.setInt(index++, docOrg_ID);
+				if (seq.get_ValueAsBoolean("SIS_isLocatorLevel"))
+					pstmt.setInt(index++, docLocator_ID);
 				if (seq.isStartNewYear() || seq.isUsePrefixAsKey() || seq.isUseSuffixAsKey())
 					pstmt.setString(index++, keyParts.getKey());
 			}
@@ -504,6 +519,8 @@ public class MSequence extends X_AD_Sequence
 							.append("SET CurrentNext = CurrentNext + ? WHERE AD_Sequence_ID=?");
 						if (seq.isOrgLevelSequence())
 							sql.append(" AND AD_Org_ID=?");
+						if (seq.get_ValueAsBoolean("SIS_isLocatorLevel"))
+							sql.append(" AND M_Locator_ID=?");
 						if (seq.isStartNewYear() || seq.isUsePrefixAsKey() || seq.isUseSuffixAsKey())
 							sql.append(" AND SequenceKey=?");
 						
@@ -517,6 +534,8 @@ public class MSequence extends X_AD_Sequence
 					updateSQL.setInt(idx++, AD_Sequence_ID);
 					if (seq.isOrgLevelSequence())
 						updateSQL.setInt(idx++, docOrg_ID);
+					if (seq.get_ValueAsBoolean("SIS_isLocatorLevel"))
+						updateSQL.setInt(idx++, docLocator_ID);
 					if (seq.isStartNewYear() || seq.isUsePrefixAsKey() || seq.isUseSuffixAsKey())
 						updateSQL.setString(idx++, keyParts.getKey());
 					updateSQL.executeUpdate();
@@ -1339,14 +1358,26 @@ public class MSequence extends X_AD_Sequence
 						docOrg_ID = (Integer)orgObj;
 					keyParts.setAD_Org_ID(docOrg_ID);
 				}
+				if (seq.get_ValueAsBoolean("SIS_isLocatorLevel")) {
+					String locatorColumn = seq.get_ValueAsString("SIS_LocatorColumn");
+					Object locatorObj = tab.getValue(locatorColumn);
+					int docLocator_ID = 0;
+					if (locatorObj != null)
+						docLocator_ID = (Integer)locatorObj;
+					keyParts.setM_Locator_ID(docLocator_ID);
+				}
 				String sql = "SELECT CurrentNext FROM AD_Sequence_No WHERE AD_Sequence_ID=? AND SequenceKey=?";
 				if (seq.isOrgLevelSequence())
 					sql += " AND AD_Org_ID=?";
+				if (seq.get_ValueAsBoolean("SIS_isLocatorLevel"))
+					sql += " AND M_Locator_ID=?";
 				Object[] params;
+				List<Object> paramList = new ArrayList<>(Arrays.asList(AD_Sequence_ID, keyParts.getKey()));
 				if (seq.isOrgLevelSequence())
-					params = new Object[]{AD_Sequence_ID, keyParts.getKey(), keyParts.getAD_Org_ID()};
-				else
-					params = new Object[]{AD_Sequence_ID, keyParts.getKey()};
+				    paramList.add(keyParts.getAD_Org_ID());
+				if (seq.get_ValueAsBoolean("SIS_isLocatorLevel"))
+				    paramList.add(keyParts.getM_Locator_ID());
+				params = paramList.toArray();
 				currentNext = DB.getSQLValueEx(null, sql, params);
 				if (currentNext <= 0)
 					currentNext = seq.getStartNo();
@@ -1368,7 +1399,7 @@ public class MSequence extends X_AD_Sequence
 			return COLUMNNAME_AD_Org_ID;
 		else
 			return super.getOrgColumn();
-	}
+	}	
 	
 	/**
 	 * Parts of the sequence key for SequenceNo level sequences
@@ -1384,7 +1415,7 @@ public class MSequence extends X_AD_Sequence
 		private List<String> prefixValues = null;
 		private List<String> suffixValues = null;
 		private String key = null;
-
+		private int locatorId =0;
 		public SequenceNoKeyParts(MSequence seq, PO po, String trxName) {
 			this.seq = seq;
 			this.po = po;
@@ -1501,6 +1532,22 @@ public class MSequence extends X_AD_Sequence
 		}
 		
 		/**
+		 * Set M_Locator_ID for the SequenceNo key
+		 * @param locatorId M_Locator_ID
+		 */
+		public void setM_Locator_ID(int locatorId) {
+		    this.locatorId = locatorId;
+		}
+
+		/**
+		 * Get the M_Locator_ID for the SequenceNo key
+		 * @return M_Locator_ID
+		 */
+		public int getM_Locator_ID() {
+		    return locatorId;
+		}
+		
+		/**
 		 * Parse the SequenceNo key based on prefix, suffix and calendar year/month
 		 * @return the SequenceNo key as a string
 		 */
@@ -1527,6 +1574,8 @@ public class MSequence extends X_AD_Sequence
 				if (key.length() > 0) // remove last separator
 					key.setLength(key.length() - SEQUENCE_NO_KEY_SEPARATOR.length());
 			}
+			
+			
 			return key.toString();
 		}
 	}

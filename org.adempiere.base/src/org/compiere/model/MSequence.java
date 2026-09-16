@@ -557,6 +557,9 @@ public class MSequence extends X_AD_Sequence
 					seqno.setAD_Org_ID(docOrg_ID);
 					seqno.setSequenceKey(keyParts.getKey());
 					seqno.setCurrentNext(startNo + incrementNo);
+					if(docLocator_ID > 0) {
+						seqno.set_ValueOfColumn("M_Locator_ID", docLocator_ID);
+					}
 					seqno.saveEx();
 				}
 				else	// standard
@@ -634,7 +637,8 @@ public class MSequence extends X_AD_Sequence
 			value = isUsePrefixAsKey() 
 					|| isUseSuffixAsKey()
 					|| isStartNewYear() 
-					|| isOrgLevelSequence();
+					|| isOrgLevelSequence()
+					|| get_ValueAsBoolean("SIS_isLocatorLevel");
 			isSequenceNoLevel.set(value);
 		}
 		return value;
@@ -1573,6 +1577,11 @@ public class MSequence extends X_AD_Sequence
 				}
 				if (key.length() > 0) // remove last separator
 					key.setLength(key.length() - SEQUENCE_NO_KEY_SEPARATOR.length());
+			}
+			if(seq.get_ValueAsBoolean("SIS_isLocatorLevel") && po.get_ValueAsInt("M_Locator_ID") >0) {
+				if (key.length() > 0)
+					key.append(SEQUENCE_NO_KEY_SEPARATOR);
+				key.append(po.get_ValueAsInt("M_Locator_ID"));
 			}
 			
 			

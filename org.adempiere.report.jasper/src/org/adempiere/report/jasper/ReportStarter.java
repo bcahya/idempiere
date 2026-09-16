@@ -478,41 +478,51 @@ public class ReportStarter implements ProcessCall, ClientProcess
                 resourceBundleObject = getFileResourceLoader().getResourceBundle(fileResourcePath, bundleName, currLang);
             }
             
-            //sini
-            int printLogId = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
-            		+ "and SIS_ProcessDetailReport_ID=?", trxName)
-            		.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))
-            		.setClient_ID().firstId();
+            //SIS
+  			String uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+  					"select "
+  					+ "    pip.ad_pinstance_para_uu "
+  					+ "from ad_pinstance_para pip "
+  					+ "where pip.ad_pinstance_id = ? "
+  					+ "and pip.parametername = 'Securecopy' ", processInfo.getAD_PInstance_ID());
+  			MPInstancePara securePara = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+  			String isSecure = securePara.getP_String();
             
-            SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, printLogId > 0 ? printLogId :0, trxName);
-            int count = printLog.getSIS_PrintCount();
-            if(count > 0) {
-      			String uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
-      					"select "
-      					+ "    pip.ad_pinstance_para_uu "
-      					+ "from ad_pinstance_para pip "
-      					+ "where pip.ad_pinstance_id = ? "
-      					+ "and pip.parametername = 'Username' ", processInfo.getAD_PInstance_ID());
-      			MPInstancePara loginParameter = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
-      			String username = loginParameter.getP_String();
-      			
-      			uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
-      					"select "
-      							+ "    pip.ad_pinstance_para_uu "
-      							+ "from ad_pinstance_para pip "
-      							+ "where pip.ad_pinstance_id = ? "
-      							+ "and pip.parametername = 'Password' ", processInfo.getAD_PInstance_ID());
-      			loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
-      			String password = loginParameter.getP_String();
-      			printLog.setAD_User_ID(validateUser(username,password));
-            }         	
-            count++;
-    	    printLog.setRecord_ID(Record_ID);
-    	    printLog.setAD_Table_ID(pi.getTable_ID());
-    	    printLog.setSIS_PrintCount(count);        
-            printLog.setSIS_ProcessDetailReport_ID(reportId);
-            printLog.saveEx();
-            
+  			if(isSecure.equals("Y")) {  				  		
+	  			int printLogId = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
+	  					+ "and SIS_ProcessDetailReport_ID=?", trxName)
+	  					.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))
+	  					.setClient_ID().firstId();
+	  			
+	            SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, printLogId > 0 ? printLogId :0, trxName);
+	            int count = printLog.getSIS_PrintCount();
+	            if(count > 0) {
+	      			 uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+	      					"select "
+	      					+ "    pip.ad_pinstance_para_uu "
+	      					+ "from ad_pinstance_para pip "
+	      					+ "where pip.ad_pinstance_id = ? "
+	      					+ "and pip.parametername = 'Username' ", processInfo.getAD_PInstance_ID());
+	      			MPInstancePara loginParameter = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+	      			String username = loginParameter.getP_String();
+	      			
+	      			uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+	      					"select "
+	      							+ "    pip.ad_pinstance_para_uu "
+	      							+ "from ad_pinstance_para pip "
+	      							+ "where pip.ad_pinstance_id = ? "
+	      							+ "and pip.parametername = 'Password' ", processInfo.getAD_PInstance_ID());
+	      			loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+	      			String password = loginParameter.getP_String();
+	      			printLog.setAD_User_ID(validateUser(username,password));
+	            }         	
+	            count++;
+	    	    printLog.setRecord_ID(Record_ID);
+	    	    printLog.setAD_Table_ID(pi.getTable_ID());
+	    	    printLog.setSIS_PrintCount(count);        
+	            printLog.setSIS_ProcessDetailReport_ID(reportId);
+	            printLog.saveEx();
+  			}
             PropertyResourceBundle propertyResourceBundle = null;
             if (resourceBundleObject!=null) {            	
                 try {
@@ -1315,7 +1325,7 @@ public class ReportStarter implements ProcessCall, ClientProcess
 	
 	private int validateUser(String username, String password) {	    
 
-		MUser user = new Query(Env.getCtx(), MUser.Table_Name , "name=?",null)
+		MUser user = new Query(Env.getCtx(), MUser.Table_Name , "name=? and password is not null",null)
 				.setClient_ID()
 				.setParameters(List.of(username)).first();
 		if (user != null && user.getPassword().equals(password))

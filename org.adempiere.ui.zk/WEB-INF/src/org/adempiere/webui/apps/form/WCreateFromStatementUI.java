@@ -130,6 +130,9 @@ public class WCreateFromStatementUI extends CreateFromStatement implements Event
 	protected Label dateToLabel = new Label("-");
 	protected WDateEditor dateToField = new WDateEditor("DateTo", false, false, true, Msg.translate(Env.getCtx(), "DateTo"));
 
+	protected Label bgNumberLabel = new Label(Msg.translate(Env.getCtx(), "BG Number"));
+	protected WStringEditor bgNumberField = new WStringEditor();
+	
 	/** Grid layout for parameter panel */
 	protected Grid parameterBankLayout;
 
@@ -245,6 +248,10 @@ public class WCreateFromStatementUI extends CreateFromStatement implements Event
 		hbox.appendChild(dateToField.getComponent());
 		row.appendChild(hbox);
 		
+		row = rows.newRow();
+		row.appendChild(bgNumberLabel.rightAlign());
+		row.appendChild(bgNumberField.getComponent());
+		
 		if (ClientInfo.isMobile()) {
 			if (ClientInfo.maxWidth(ClientInfo.EXTRA_SMALL_WIDTH))
 				LayoutUtils.compactTo(parameterBankLayout, 2);		
@@ -309,7 +316,8 @@ public class WCreateFromStatementUI extends CreateFromStatement implements Event
 		loadTableOIS(getBankAccountData((Integer)bankAccountField.getValue(), (Integer)bPartnerLookup.getValue(), 
 				documentNoField.getValue().toString(), dateFromField.getValue(), dateToField.getValue(),
 				amtFromField.getValue(), amtToField.getValue(), 
-				(Integer)documentTypeField.getValue(), (String)tenderTypeField.getValue(), authorizationField.getValue().toString(), null));
+				(Integer)documentTypeField.getValue(), (String)tenderTypeField.getValue(), authorizationField.getValue().toString(), null,
+				bgNumberField.getValue().toString()));
 	}
 	
 	/**

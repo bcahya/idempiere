@@ -49,7 +49,7 @@ public abstract class CreateFromBatch extends CreateFrom
 			Object AmtFrom, Object AmtTo, Object DocType, Object TenderType, String AuthCode)
 	{
 		return getSQLWhere((Integer)BPartner, DocumentNo, (Timestamp)DateFrom, (Timestamp)DateTo, 
-				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, 0, 0);
+				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, 0, 0,null);
 	}
 	
 	/**
@@ -69,7 +69,7 @@ public abstract class CreateFromBatch extends CreateFrom
 	protected String getSQLWhere(Integer BPartner, String DocumentNo, Timestamp DateFrom, Timestamp DateTo, 
 			BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode)
 	{
-		return getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode,null,0);
+		return getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode,null,0,null);
 	}
 	
 	/**
@@ -88,7 +88,7 @@ public abstract class CreateFromBatch extends CreateFrom
 	 * @return where clause
 	 */
 	protected String getSQLWhere(Integer BPartner, String DocumentNo, Timestamp DateFrom, Timestamp DateTo, 
-			BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency, Integer AD_Org_ID)
+			BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency, Integer AD_Org_ID, String bgNumber)
 	{
 		StringBuilder sql = new StringBuilder();
 		sql.append("WHERE p.Processed='Y' AND p.C_BankAccount_ID = ? ");
@@ -130,7 +130,10 @@ public abstract class CreateFromBatch extends CreateFrom
 		
 		if(AD_Org_ID > 0)
 			sql.append(" AND p.AD_Org_ID = ?");
-
+		
+		if(bgNumber != null && bgNumber.length() > 0)
+			sql.append(" AND UPPER(p.SIS_BGNumber) LIKE ? ");
+		
 		if (log.isLoggable(Level.FINE)) log.fine(sql.toString());
 		return sql.toString();
 	}
@@ -141,7 +144,7 @@ public abstract class CreateFromBatch extends CreateFrom
 	throws SQLException
 	{
 		setParameters(pstmt, (Integer)BankAccount, (Integer)BPartner, DocumentNo, (Timestamp)DateFrom, (Timestamp)DateTo, 
-				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, 0, 0);
+				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, 0, 0,"");
 	}
 	
 	@Deprecated (since="13", forRemoval=true)
@@ -150,7 +153,7 @@ public abstract class CreateFromBatch extends CreateFrom
 	throws SQLException
 	{
 		setParameters(pstmt, (Integer)BankAccount, (Integer)BPartner, DocumentNo, (Timestamp)DateFrom, (Timestamp)DateTo, 
-				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, (Integer)Currency, 0);
+				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, (Integer)Currency, 0,"");
 	}
 	
 	/**
@@ -169,7 +172,7 @@ public abstract class CreateFromBatch extends CreateFrom
 	 * @throws SQLException
 	 */
 	protected void setParameters(PreparedStatement pstmt, Integer BankAccount, Integer BPartner, String DocumentNo, Timestamp DateFrom, Timestamp DateTo, 
-			BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency, Integer AD_Org_ID)
+			BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency, Integer AD_Org_ID, String bgNumber)
 	throws SQLException
 	{
 		int index = 1;
@@ -224,6 +227,9 @@ public abstract class CreateFromBatch extends CreateFrom
 		
 		if(AD_Org_ID > 0)
 			pstmt.setInt(index++, (Integer) AD_Org_ID);
+		
+		if(bgNumber != null && bgNumber.length() > 0)
+			pstmt.setString(index++, getSQLText(bgNumber));
 	}
 	
 	private String getSQLText(String text)
@@ -240,7 +246,7 @@ public abstract class CreateFromBatch extends CreateFrom
 			Object DateFrom, Object DateTo, Object AmtFrom, Object AmtTo, Object DocType, Object TenderType, String AuthCode)
 	{
 		return getBankAccountData((Integer)BankAccount, (Integer)BPartner, DocumentNo, (Timestamp)DateFrom, (Timestamp)DateTo, 
-				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, 0);
+				(BigDecimal)AmtFrom, (BigDecimal)AmtTo, (Integer)DocType, (String)TenderType, AuthCode, 0,null);
 	}
 	
 	/**
@@ -259,7 +265,7 @@ public abstract class CreateFromBatch extends CreateFrom
 	 * @return list of transaction records (usually payments) for bank account
 	 */
 	protected abstract Vector<Vector<Object>> getBankAccountData(Integer BankAccount, Integer BPartner, String DocumentNo, 
-			Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency);
+			Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency,String bgNumber);
 	
 	@Override
 	public void info(IMiniTable miniTable, IStatusBar statusBar)

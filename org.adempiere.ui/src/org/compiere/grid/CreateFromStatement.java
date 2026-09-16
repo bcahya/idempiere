@@ -99,7 +99,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		sql.append(" AND NOT EXISTS (SELECT 1 FROM C_BankStatementLine l WHERE db.C_DepositBatch_ID=l.C_DepositBatch_ID AND l.StmtAmt <> 0)");
 		sql.append(" GROUP BY db.C_DepositBatch_ID,db.DocumentNo,p.C_Currency_ID, c.ISO_Code, db.DateDeposit, p.Processed, p.C_BankAccount_ID, p.C_DocType_ID ");
 		
-		sql.append(") SELECT DateTrx, C_Payment_ID, C_DepositBatch_ID, DocumentNo, C_Currency_ID, ISO_Code, PayAmt, ConvAmount, Name FROM Payments p ");
+		sql.append(") SELECT DateTrx, C_Payment_ID, C_DepositBatch_ID, DocumentNo, C_Currency_ID, ISO_Code, PayAmt, ConvAmount, Name,SIS_BGNumber FROM Payments p ");
 		sql.append(getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, 0));
 		sql.append(" ORDER BY DateTrx");
 
@@ -128,6 +128,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 				line.add(rs.getBigDecimal(7));      //  5-PayAmt
 				line.add(rs.getBigDecimal(8));      //  6-Conv Amt
 				line.add(rs.getString(9));      	//  7-BParner
+				line.add(rs.getString(10));      	//  7-BParner
 				data.add(line);
 			}
 		}
@@ -158,6 +159,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		miniTable.setColumnClass(5, BigDecimal.class, true);    //  5-Amount
 		miniTable.setColumnClass(6, BigDecimal.class, true);    //  6-ConvAmount
 		miniTable.setColumnClass(7, String.class, true);    	//  7-BPartner
+		miniTable.setColumnClass(8, String.class, true);    	//  7-BPartner
 		//  Table UI
 		miniTable.autoSize();
 	}

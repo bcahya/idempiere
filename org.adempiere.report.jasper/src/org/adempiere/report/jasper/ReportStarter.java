@@ -57,9 +57,13 @@ import org.compiere.model.MPInstance;
 import org.compiere.model.MPInstancePara;
 import org.compiere.model.MProcess;
 import org.compiere.model.MQuery;
+import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
+import org.compiere.model.MUser;
 import org.compiere.model.PrintInfo;
+import org.compiere.model.Query;
+import org.compiere.model.SIS_MDocumentPrintLog;
 import org.compiere.model.SystemProperties;
 import org.compiere.model.X_AD_PInstance_Para;
 import org.compiere.print.MPrintFormat;
@@ -74,7 +78,9 @@ import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Ini;
+import org.compiere.util.KeyNamePair;
 import org.compiere.util.Language;
+import org.compiere.util.Login;
 import org.compiere.util.Msg;
 import org.compiere.util.Trx;
 import org.compiere.util.Util;
@@ -237,6 +243,8 @@ public class ReportStarter implements ProcessCall, ClientProcess
         PrintInfo printInfo = null;
         String reportFilePath = reportInfo.getReportFilePath();
         
+        int reportId = 0;
+        
         //[SIS] - Multi Report
   		////////////////////////////
   		if (AttachmentResourceLoader.isSISReportDetailResourcePath(reportFilePath)) {
@@ -248,12 +256,12 @@ public class ReportStarter implements ProcessCall, ClientProcess
   					+ "where pip.ad_pinstance_id = ? "
   					+ "and pip.parametername = 'SIS_ProcessDetailReport_ID' ", processInfo.getAD_PInstance_ID());
   			MPInstancePara pip = new MPInstancePara(Env.getCtx(), uuIDPIP, processInfo.getTransactionName());
-  			int recordID = pip.getP_Number().intValue();
+  			reportId = pip.getP_Number().intValue();
   			detailPath = DB.getSQLValueStringEx(processInfo.getTransactionName(),
   					"select "
   					+ "    jasperreport "
   					+ "from sis_processdetailreport "
-  					+ "where sis_processdetailreport_id = ? ", recordID);
+  					+ "where sis_processdetailreport_id = ? ", reportId);
   			if (detailPath == null || detailPath.equalsIgnoreCase("")) {
   				throw new AdempiereException("jasper report name not found!");
   			}
@@ -469,6 +477,41 @@ public class ReportStarter implements ProcessCall, ClientProcess
             } else {
                 resourceBundleObject = getFileResourceLoader().getResourceBundle(fileResourcePath, bundleName, currLang);
             }
+            
+            //sini
+            int printLogId = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
+            		+ "and SIS_ProcessDetailReport_ID=?", trxName)
+            		.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))
+            		.setClient_ID().firstId();
+            
+            SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, printLogId > 0 ? printLogId :0, trxName);
+            int count = printLog.getSIS_PrintCount();
+            if(count > 0) {
+      			String uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+      					"select "
+      					+ "    pip.ad_pinstance_para_uu "
+      					+ "from ad_pinstance_para pip "
+      					+ "where pip.ad_pinstance_id = ? "
+      					+ "and pip.parametername = 'Username' ", processInfo.getAD_PInstance_ID());
+      			MPInstancePara loginParameter = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+      			String username = loginParameter.getP_String();
+      			
+      			uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+      					"select "
+      							+ "    pip.ad_pinstance_para_uu "
+      							+ "from ad_pinstance_para pip "
+      							+ "where pip.ad_pinstance_id = ? "
+      							+ "and pip.parametername = 'Password' ", processInfo.getAD_PInstance_ID());
+      			loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+      			String password = loginParameter.getP_String();
+      			printLog.setAD_User_ID(validateUser(username,password));
+            }         	
+            count++;
+    	    printLog.setRecord_ID(Record_ID);
+    	    printLog.setAD_Table_ID(pi.getTable_ID());
+    	    printLog.setSIS_PrintCount(count);        
+            printLog.setSIS_ProcessDetailReport_ID(reportId);
+            printLog.saveEx();
             
             PropertyResourceBundle propertyResourceBundle = null;
             if (resourceBundleObject!=null) {            	
@@ -1268,6 +1311,23 @@ public class ReportStarter implements ProcessCall, ClientProcess
 	@Override
 	public void setProcessUI(IProcessUI processUI) {
 		m_processUI = processUI;
+	}
+	
+	private int validateUser(String username, String password) {	    
+
+		MUser user = new Query(Env.getCtx(), MUser.Table_Name , "name=?",null)
+				.setClient_ID()
+				.setParameters(List.of(username)).first();
+		if (user != null && user.getPassword().equals(password))
+		{
+			MRole[] role = user.getRoles(Env.getAD_Org_ID(Env.getCtx()));        	
+			for (MRole r : role) {
+				if (r.get_ValueAsBoolean("SIS_AllowPrintCopy"))
+					return user.get_ID();
+			}			
+			throw new AdempiereException("User has no role to print copy document!");
+		}	               
+		 throw new AdempiereException("Invalid user");
 	}
 
 }

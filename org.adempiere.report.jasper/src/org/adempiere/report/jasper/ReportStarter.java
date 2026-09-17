@@ -61,6 +61,7 @@ import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MTable;
 import org.compiere.model.MUser;
+import org.compiere.model.MUserRoles;
 import org.compiere.model.PrintInfo;
 import org.compiere.model.Query;
 import org.compiere.model.SIS_MDocumentPrintLog;
@@ -1330,8 +1331,9 @@ public class ReportStarter implements ProcessCall, ClientProcess
 				.setParameters(List.of(username)).first();
 		if (user != null && user.getPassword().equals(password))
 		{
-			MRole[] role = user.getRoles(0);        	
-			for (MRole r : role) {
+			MUserRoles[] uRole = MUserRoles.getOfUser(Env.getCtx(), user.getAD_User_ID());			        
+			for (MUserRoles ur : uRole) {
+				MRole r = MRole.get(Env.getCtx(), ur.getAD_Role_ID());
 				if (r.get_ValueAsBoolean("SIS_AllowPrintCopy"))
 					return user.get_ID();
 			}

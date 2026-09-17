@@ -489,13 +489,13 @@ public class ReportStarter implements ProcessCall, ClientProcess
   			String isSecure = securePara.getP_String();
             
   			if(isSecure.equals("Y")) {  				  		
-	  			int printLogId = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
+	  			int count = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
 	  					+ "and SIS_ProcessDetailReport_ID=?", trxName)
 	  					.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))
-	  					.setClient_ID().firstId();
+	  					.setClient_ID().list().size();
 	  			
-	            SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, printLogId > 0 ? printLogId :0, trxName);
-	            int count = printLog.getSIS_PrintCount();
+	            SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, 0, trxName);
+	            
 	            if(count > 0) {
 	      			 uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
 	      					"select "
@@ -515,11 +515,11 @@ public class ReportStarter implements ProcessCall, ClientProcess
 	      			loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
 	      			String password = loginParameter.getP_String();
 	      			printLog.setAD_User_ID(validateUser(username,password));
-	            }         	
-	            count++;
+	            } else {
+	            	printLog.setAD_User_ID(Env.getAD_User_ID(ctx));
+	            }
 	    	    printLog.setRecord_ID(Record_ID);
-	    	    printLog.setAD_Table_ID(pi.getTable_ID());
-	    	    printLog.setSIS_PrintCount(count);        
+	    	    printLog.setAD_Table_ID(pi.getTable_ID());	    	    
 	            printLog.setSIS_ProcessDetailReport_ID(reportId);
 	            printLog.saveEx();
   			}

@@ -1330,11 +1330,11 @@ public class ReportStarter implements ProcessCall, ClientProcess
 				.setParameters(List.of(username)).first();
 		if (user != null && user.getPassword().equals(password))
 		{
-			MRole[] role = user.getRoles(Env.getAD_Org_ID(Env.getCtx()));        	
+			MRole[] role = user.getRoles(0);        	
 			for (MRole r : role) {
 				if (r.get_ValueAsBoolean("SIS_AllowPrintCopy"))
 					return user.get_ID();
-			}			
+			}
 			throw new AdempiereException("User has no role to print copy document!");
 		}	               
 		 throw new AdempiereException("Invalid user");

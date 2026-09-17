@@ -279,7 +279,7 @@ public class MRequisition extends X_M_Requisition implements DocAction
 		}
 		
 		//	Std Period open?
-		MPeriod.testPeriodOpen(getCtx(), getDateDoc(), MDocType.DOCBASETYPE_PurchaseRequisition, getAD_Org_ID());
+//		MPeriod.testPeriodOpen(getCtx(), getDateDoc(), MDocType.DOCBASETYPE_PurchaseRequisition, getAD_Org_ID());
 		
 		//	Add up Amounts
 		int precision = MPriceList.getStandardPrecision(getCtx(), getM_PriceList_ID());
@@ -352,7 +352,8 @@ public class MRequisition extends X_M_Requisition implements DocAction
 
 		// Set the definite document number after completed (if needed)
 //		setDefiniteDocumentNo(); //[SIS] - move documentno to queue
-
+		MPeriod.testPeriodOpen(getCtx(), getDateDoc(), MDocType.DOCBASETYPE_PurchaseRequisition, getAD_Org_ID());
+		
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;

@@ -66,7 +66,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 	 */
 	@Override
 	protected Vector<Vector<Object>> getBankAccountData(Integer BankAccount, Integer BPartner, String DocumentNo, 
-			Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency)
+			Timestamp DateFrom, Timestamp DateTo, BigDecimal AmtFrom, BigDecimal AmtTo, Integer DocType, String TenderType, String AuthCode, Integer Currency, String bgNumber)
 	{
 		Vector<Vector<Object>> data = new Vector<Vector<Object>>();
 		
@@ -74,7 +74,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		sql.append("WITH Payments AS ( ");
 		sql.append("SELECT p.DateTrx as DateTrx, p.C_Payment_ID, NULL AS C_DepositBatch_ID, p.DocumentNo, p.C_Currency_ID, c.ISO_Code, p.PayAmt,");
 		sql.append(" currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,p.DateAcct,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID) AS ConvAmount, bp.Name,");
-		sql.append(" p.Processed, p.C_BankAccount_ID, p.C_DocType_ID, p.TenderType, p.R_AuthCode, p.C_BPartner_ID ");
+		sql.append(" p.Processed, p.C_BankAccount_ID, p.C_DocType_ID, p.TenderType, p.R_AuthCode, p.C_BPartner_ID, p.SIS_BGNumber ");
 		sql.append("FROM C_BankAccount ba");
 		sql.append(" INNER JOIN C_Payment_v p ON (p.C_BankAccount_ID=ba.C_BankAccount_ID)");
 		sql.append(" INNER JOIN C_Currency c ON (p.C_Currency_ID=c.C_Currency_ID)");
@@ -88,7 +88,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		sql.append("UNION ALL ");
 		sql.append("SELECT db.DateDeposit AS DateTrx, NULL AS C_Payment_ID, db.C_DepositBatch_ID, db.DocumentNo, p.C_Currency_ID, c.ISO_Code, SUM(p.PayAmt) AS PayAmt,");
 		sql.append(" SUM(currencyConvert(p.PayAmt,p.C_Currency_ID,ba.C_Currency_ID,p.DateAcct,p.C_ConversionType_ID,p.AD_Client_ID,p.AD_Org_ID)) AS ConvAmount, NULL As Name,");
-		sql.append(" p.Processed, p.C_BankAccount_ID, p.C_DocType_ID, NULL AS TenderType, NULL AS R_AuthCode, NULL AS C_BPartner_ID ");
+		sql.append(" p.Processed, p.C_BankAccount_ID, p.C_DocType_ID, NULL AS TenderType, NULL AS R_AuthCode, NULL AS C_BPartner_ID, p.SIS_BGNumber ");
 		sql.append(" FROM C_BankAccount ba");
 		sql.append(" INNER JOIN C_DepositBatch db ON (db.C_BankAccount_ID=ba.C_BankAccount_ID)");
 		sql.append(" INNER JOIN C_DepositBatchLine dbl ON (dbl.C_DepositBatch_ID = db.C_DepositBatch_ID)");
@@ -97,10 +97,10 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		sql.append(" WHERE db.DocStatus IN ('CO','CL') AND db.DepositAmt<>0");
 	    sql.append(" AND NOT EXISTS (SELECT 1 FROM C_BankStatementLine l WHERE p.C_Payment_ID=l.C_Payment_ID AND l.StmtAmt <> 0)");
 		sql.append(" AND NOT EXISTS (SELECT 1 FROM C_BankStatementLine l WHERE db.C_DepositBatch_ID=l.C_DepositBatch_ID AND l.StmtAmt <> 0)");
-		sql.append(" GROUP BY db.C_DepositBatch_ID,db.DocumentNo,p.C_Currency_ID, c.ISO_Code, db.DateDeposit, p.Processed, p.C_BankAccount_ID, p.C_DocType_ID ");
+		sql.append(" GROUP BY db.C_DepositBatch_ID,db.DocumentNo,p.C_Currency_ID, c.ISO_Code, db.DateDeposit, p.Processed, p.C_BankAccount_ID, p.C_DocType_ID, p.SIS_BGNumber ");
 		
-		sql.append(") SELECT DateTrx, C_Payment_ID, C_DepositBatch_ID, DocumentNo, C_Currency_ID, ISO_Code, PayAmt, ConvAmount, Name,SIS_BGNumber FROM Payments p ");
-		sql.append(getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, 0));
+		sql.append(") SELECT DateTrx, C_Payment_ID, C_DepositBatch_ID, DocumentNo, C_Currency_ID, ISO_Code, PayAmt, ConvAmount, Name, SIS_BGNumber FROM Payments p ");
+		sql.append(getSQLWhere(BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, 0,bgNumber));
 		sql.append(" ORDER BY DateTrx");
 
 		PreparedStatement pstmt = null;
@@ -108,7 +108,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		try
 		{
 			pstmt = DB.prepareStatement(sql.toString(), getTrxName());
-			setParameters(pstmt, BankAccount, BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, 0);
+			setParameters(pstmt, BankAccount, BPartner, DocumentNo, DateFrom, DateTo, AmtFrom, AmtTo, DocType, TenderType, AuthCode, Currency, 0,bgNumber);
 			rs = pstmt.executeQuery();
 			while(rs.next())
 			{
@@ -128,7 +128,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 				line.add(rs.getBigDecimal(7));      //  5-PayAmt
 				line.add(rs.getBigDecimal(8));      //  6-Conv Amt
 				line.add(rs.getString(9));      	//  7-BParner
-				line.add(rs.getString(10));      	//  7-BParner
+				line.add(rs.getString(10));      	//  7-BG Number
 				data.add(line);
 			}
 		}
@@ -159,7 +159,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		miniTable.setColumnClass(5, BigDecimal.class, true);    //  5-Amount
 		miniTable.setColumnClass(6, BigDecimal.class, true);    //  6-ConvAmount
 		miniTable.setColumnClass(7, String.class, true);    	//  7-BPartner
-		miniTable.setColumnClass(8, String.class, true);    	//  7-BPartner
+		miniTable.setColumnClass(8, String.class, true);    	//  8-BG number
 		//  Table UI
 		miniTable.autoSize();
 	}
@@ -234,6 +234,7 @@ public abstract class CreateFromStatement extends CreateFromBatch
 		columnNames.add(Msg.translate(Env.getCtx(), "Amount"));
 		columnNames.add(Msg.translate(Env.getCtx(), "ConvertedAmount"));
 		columnNames.add(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+		columnNames.add(Msg.translate(Env.getCtx(), "BG Number"));
 	    
 	    return columnNames;
 	}

@@ -930,6 +930,10 @@ public class MOrder extends X_C_Order implements DocAction
 			whereClauseFinal.append(whereClause);
 		if (Util.isEmpty(orderClause, true))
 			orderClause = MOrderLine.COLUMNNAME_Line;
+		
+		//[PSI] - 8095
+		whereClauseFinal.append(" and sis_returnline_id is null ");
+		
 		//
 		List<MOrderLine> list = new Query(getCtx(), I_C_OrderLine.Table_Name, whereClauseFinal.toString(), get_TrxName())
 										.setParameters(get_ID())

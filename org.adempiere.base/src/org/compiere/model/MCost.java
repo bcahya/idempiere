@@ -212,6 +212,7 @@ public class MCost extends X_M_Cost implements ICostInfo
 		BigDecimal otherCostEach = Env.ZERO;
 		BigDecimal percentage = Env.ZERO;
 		int count = 0;
+		
 		//
 		String sql = "SELECT"
 			+ " COALESCE(SUM(c.CurrentCostPrice),0),"		// 1
@@ -226,6 +227,24 @@ public class MCost extends X_M_Cost implements ICostInfo
 			+ " AND c.M_CostType_ID=? AND c.C_AcctSchema_ID=?"	//	#5/6
 			+ " AND (ce.CostingMethod IS NULL OR ce.CostingMethod=?) "	//	#7
 			+ "GROUP BY ce.CostElementType, ce.CostingMethod, c.Percent, c.M_CostElement_ID";
+		
+		//[PSI] - 8091
+		if (M_ASI_ID > 0) {
+			sql = "SELECT"
+			+ " COALESCE(SUM(c.CurrentCostPrice),0),"		// 1
+			+ " ce.CostElementType, ce.CostingMethod,"		// 2,3
+			+ " c.Percent, c.M_CostElement_ID ,"			// 4,5
+			+ " COALESCE(SUM(c.CurrentCostPriceLL),0) "		// 6
+			+ " FROM M_Cost c"
+			+ " LEFT OUTER JOIN M_CostElement ce ON (c.M_CostElement_ID=ce.M_CostElement_ID) "
+			+ "WHERE c.AD_Client_ID=? AND c.AD_Org_ID=?"		//	#1/2
+			+ " AND c.M_Product_ID=?"							//	#3
+			+ " AND (c.M_AttributeSetInstance_ID=?)"	//	#4
+			+ " AND c.M_CostType_ID=? AND c.C_AcctSchema_ID=?"	//	#5/6
+			+ " AND (ce.CostingMethod IS NULL OR ce.CostingMethod=?) "	//	#7
+			+ "GROUP BY ce.CostElementType, ce.CostingMethod, c.Percent, c.M_CostElement_ID";
+		}
+				
 		PreparedStatement pstmt = null;
 		ResultSet rs = null;
 		try

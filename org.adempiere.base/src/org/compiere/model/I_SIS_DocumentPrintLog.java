@@ -18,21 +18,19 @@ package org.compiere.model;
 
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-import org.compiere.model.*;
 import org.compiere.util.KeyNamePair;
 
 /** Generated Interface for SIS_DocumentPrintLog
  *  @author iDempiere (generated) 
  *  @version Release 13
  */
-@SuppressWarnings("all")
 public interface I_SIS_DocumentPrintLog 
 {
 
     /** TableName=SIS_DocumentPrintLog */
     public static final String Table_Name = "SIS_DocumentPrintLog";
 
-    /** AD_Table_ID=1000081 */
+    /** AD_Table_ID=1000093 */
     public static final int Table_ID = MTable.getTable_ID(Table_Name);
 
     KeyNamePair Model = new KeyNamePair(Table_ID, Table_Name);
@@ -185,6 +183,15 @@ public interface I_SIS_DocumentPrintLog
 	  * Print Count
 	  */
 	public int getSIS_PrintCount();
+
+    /** Column name SIS_ProcessDetailReport_ID */
+    public static final String COLUMNNAME_SIS_ProcessDetailReport_ID = "SIS_ProcessDetailReport_ID";
+
+	/** Set Process Detail Report	  */
+	public void setSIS_ProcessDetailReport_ID (int SIS_ProcessDetailReport_ID);
+
+	/** Get Process Detail Report	  */
+	public int getSIS_ProcessDetailReport_ID();
 
     /** Column name Updated */
     public static final String COLUMNNAME_Updated = "Updated";

@@ -19,7 +19,6 @@ package org.compiere.model;
 
 import java.sql.ResultSet;
 import java.util.Properties;
-import org.compiere.model.*;
 
 /** Generated Model for SIS_DocumentPrintLog
  *  @author iDempiere (generated)
@@ -31,7 +30,7 @@ public class X_SIS_DocumentPrintLog extends PO implements I_SIS_DocumentPrintLog
 	/**
 	 *
 	 */
-	private static final long serialVersionUID = 20260516L;
+	private static final long serialVersionUID = 20260907L;
 
     /** Standard Constructor */
     public X_SIS_DocumentPrintLog (Properties ctx, int SIS_DocumentPrintLog_ID, String trxName)
@@ -244,6 +243,27 @@ public class X_SIS_DocumentPrintLog extends PO implements I_SIS_DocumentPrintLog
 	public int getSIS_PrintCount()
 	{
 		Integer ii = (Integer)get_Value(COLUMNNAME_SIS_PrintCount);
+		if (ii == null)
+			 return 0;
+		return ii.intValue();
+	}
+
+	/** Set Process Detail Report.
+		@param SIS_ProcessDetailReport_ID Process Detail Report
+	*/
+	public void setSIS_ProcessDetailReport_ID (int SIS_ProcessDetailReport_ID)
+	{
+		if (SIS_ProcessDetailReport_ID < 1)
+			set_ValueNoCheck (COLUMNNAME_SIS_ProcessDetailReport_ID, null);
+		else
+			set_ValueNoCheck (COLUMNNAME_SIS_ProcessDetailReport_ID, Integer.valueOf(SIS_ProcessDetailReport_ID));
+	}
+
+	/** Get Process Detail Report.
+		@return Process Detail Report	  */
+	public int getSIS_ProcessDetailReport_ID()
+	{
+		Integer ii = (Integer)get_Value(COLUMNNAME_SIS_ProcessDetailReport_ID);
 		if (ii == null)
 			 return 0;
 		return ii.intValue();

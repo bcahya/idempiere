@@ -433,6 +433,23 @@ public class MAttributeSetInstance extends X_M_AttributeSetInstance
 		return asi;
 	}
 	
+	public static MAttributeSetInstance create(Properties ctx, MProduct product, int locatorId ,String trxName)
+	{
+		MAttributeSetInstance asi = new MAttributeSetInstance(ctx, 0, trxName);
+		asi.setClientOrg(product.getAD_Client_ID(), 0);
+		asi.setM_AttributeSet_ID(product.getM_AttributeSet_ID());
+		asi.set_ValueOfColumn("M_Locator_ID", locatorId);
+		if (asi.getM_AttributeSet_ID() > 0)
+		{
+			asi.getLot(true, product.get_ID());
+			asi.getSerNo(true);
+			asi.getGuaranteeDate(true);
+		}
+		//
+		asi.saveEx();
+		return asi;
+	}
+	
 	/**
 	 * AutoGenerate and save a new ASI for given product.
 	 * Automatically creates Lot#.

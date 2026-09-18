@@ -516,6 +516,7 @@ public class ReportStarter implements ProcessCall, ClientProcess
 	      			loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
 	      			String password = loginParameter.getP_String();
 	      			printLog.setAD_User_ID(validateUser(username,password));
+	      			params.put("isCopy", "Y");
 	            } else {
 	            	printLog.setAD_User_ID(Env.getAD_User_ID(ctx));
 	            }

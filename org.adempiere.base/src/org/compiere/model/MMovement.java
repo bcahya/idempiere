@@ -296,11 +296,11 @@ public class MMovement extends X_M_Movement implements DocAction
 		MDocType dt = MDocType.get(getCtx(), getC_DocType_ID());
 
 		//	Std Period open?
-		if (!MPeriod.isOpen(getCtx(), getMovementDate(), dt.getDocBaseType(), getAD_Org_ID()))
-		{
-			m_processMsg = "@PeriodClosed@";
-			return DocAction.STATUS_Invalid;
-		}
+//		if (!MPeriod.isOpen(getCtx(), getMovementDate(), dt.getDocBaseType(), getAD_Org_ID()))
+//		{
+//			m_processMsg = "@PeriodClosed@";
+//			return DocAction.STATUS_Invalid;
+//		}
 		
 		if (!MAcctSchema.isBackDateTrxAllowed(getCtx(), getMovementDate(), get_TrxName()))
 		{
@@ -427,6 +427,14 @@ public class MMovement extends X_M_Movement implements DocAction
 		if (pendingConfirmations()) {
 			m_processMsg = "@Open@: @M_MovementConfirm_ID@";
 			return DocAction.STATUS_InProgress;
+		}
+		
+		MDocType dt = MDocType.get(getC_DocType_ID());
+		
+		if (!MPeriod.isOpen(getCtx(), getMovementDate(), dt.getDocBaseType(), getAD_Org_ID()))
+		{
+			m_processMsg = "@PeriodClosed@";
+			return DocAction.STATUS_Invalid;
 		}
 
 		//	Implicit Approval

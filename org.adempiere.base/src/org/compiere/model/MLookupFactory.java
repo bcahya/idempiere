@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.compiere.util.CCache;
 import org.compiere.util.CLogger;
@@ -272,7 +274,27 @@ public class MLookupFactory
 				info.TableName, MRole.SQL_FULLYQUALIFIED, MRole.SQL_RO);
 		
 		//[PSI] - add access sql
-		info.Query = info.Query += SIS_Utils.getSQLAccess(info.TableName, false);
+		Pattern pattern = Pattern.compile(
+			    "(?is)^(.*?)\\s+(ORDER\\s+BY\\s+.*)$"
+			);
+
+		Matcher matcher = pattern.matcher(info.Query.trim());
+
+		if (matcher.matches()) {
+		    String selectPart = matcher.group(1)
+		        .replaceAll("\\s+", " ")
+		        .trim()
+		        .toUpperCase();
+
+		    String orderByPart = matcher.group(2)
+		        .replaceAll("\\s+", " ")
+		        .trim()
+		        .toUpperCase();
+
+			info.Query = selectPart + " "+ SIS_Utils.getSQLAccess(info.TableName, false) +" "+orderByPart;
+		} else {
+			info.Query = info.Query += SIS_Utils.getSQLAccess(info.TableName, false);
+		}
 		
 		return info;
 	}	//	getLookupInfo

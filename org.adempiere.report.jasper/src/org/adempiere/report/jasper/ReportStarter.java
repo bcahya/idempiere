@@ -486,44 +486,45 @@ public class ReportStarter implements ProcessCall, ClientProcess
   					+ "from ad_pinstance_para pip "
   					+ "where pip.ad_pinstance_id = ? "
   					+ "and pip.parametername = 'Securecopy' ", processInfo.getAD_PInstance_ID());
-  			MPInstancePara securePara = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
-  			String isSecure = securePara.getP_String();
-            
-  			if(isSecure.equals("Y")) {  				  		
-	  			int count = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
-	  					+ "and SIS_ProcessDetailReport_ID=?", trxName)
-	  					.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))
-	  					.setClient_ID().list().size();
-	  			
-	            SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, 0, trxName);
-	            
-	            if(count > 0) {
-	      			 uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
-	      					"select "
-	      					+ "    pip.ad_pinstance_para_uu "
-	      					+ "from ad_pinstance_para pip "
-	      					+ "where pip.ad_pinstance_id = ? "
-	      					+ "and pip.parametername = 'Username' ", processInfo.getAD_PInstance_ID());
-	      			MPInstancePara loginParameter = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
-	      			String username = loginParameter.getP_String();
-	      			
-	      			uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
-	      					"select "
-	      							+ "    pip.ad_pinstance_para_uu "
-	      							+ "from ad_pinstance_para pip "
-	      							+ "where pip.ad_pinstance_id = ? "
-	      							+ "and pip.parametername = 'Password' ", processInfo.getAD_PInstance_ID());
-	      			loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
-	      			String password = loginParameter.getP_String();
-	      			printLog.setAD_User_ID(validateUser(username,password));
-	      			params.put("isCopy", "Y");
-	            } else {
-	            	printLog.setAD_User_ID(Env.getAD_User_ID(ctx));
-	            }
-	    	    printLog.setRecord_ID(Record_ID);
-	    	    printLog.setAD_Table_ID(pi.getTable_ID());	    	    
-	            printLog.setSIS_ProcessDetailReport_ID(reportId);
-	            printLog.saveEx();
+  			  			          
+  			if(uuPara != null) {  				  		
+  				MPInstancePara securePara = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+  				if(securePara.getP_String().equals("Y")) {
+  					int count = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
+  							+ "and SIS_ProcessDetailReport_ID=?", trxName)
+  							.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))
+  							.setClient_ID().list().size();
+
+  					SIS_MDocumentPrintLog printLog = new SIS_MDocumentPrintLog(ctx, 0, trxName);
+
+  					if(count > 0) {
+  						uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+  								"select "
+  										+ "    pip.ad_pinstance_para_uu "
+  										+ "from ad_pinstance_para pip "
+  										+ "where pip.ad_pinstance_id = ? "
+  										+ "and pip.parametername = 'Username' ", processInfo.getAD_PInstance_ID());
+  						MPInstancePara loginParameter = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+  						String username = loginParameter.getP_String();
+
+  						uuPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+  								"select "
+  										+ "    pip.ad_pinstance_para_uu "
+  										+ "from ad_pinstance_para pip "
+  										+ "where pip.ad_pinstance_id = ? "
+  										+ "and pip.parametername = 'Password' ", processInfo.getAD_PInstance_ID());
+  						loginParameter =  new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
+  						String password = loginParameter.getP_String();
+  						printLog.setAD_User_ID(validateUser(username,password));
+  						params.put("isCopy", "Y");
+  					} else {
+  						printLog.setAD_User_ID(Env.getAD_User_ID(ctx));
+  					}
+  					printLog.setRecord_ID(Record_ID);
+  					printLog.setAD_Table_ID(pi.getTable_ID());	    	    
+  					printLog.setSIS_ProcessDetailReport_ID(reportId);
+  					printLog.saveEx();
+  				}
   			}
             PropertyResourceBundle propertyResourceBundle = null;
             if (resourceBundleObject!=null) {            	

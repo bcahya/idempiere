@@ -2,10 +2,15 @@ package org.idempiere.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MCharge;
 import org.compiere.model.MDocType;
@@ -181,6 +186,113 @@ public class SIS_Utils {
 
 	public static BigDecimal getBigDecimal(Object value, int scale) {
 		return getBigDecimal(value).setScale(scale, BigDecimal.ROUND_HALF_UP);
+	}
+	
+	public static Timestamp getTimestampFromString(String date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		Timestamp result = null;
+		try {
+			result = new Timestamp(sdf.parse(date).getTime());
+		} catch (ParseException e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return result;
+	}
+	
+	public static Timestamp getTimestampFromStringDash(String date) {
+		if (date == null) {
+			return null;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Timestamp result = null;
+		try {
+			result = new Timestamp(sdf.parse(date).getTime());
+		} catch (ParseException e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return result;
+	}
+	
+	public static Timestamp getTimestampTimeFromString(String date) {
+		if (date == null) {
+			return null;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		Timestamp result = null;
+		try {
+			result = new Timestamp(sdf.parse(date).getTime());
+		} catch (ParseException e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return result;
+	}
+	
+	public static Timestamp getTimestampTimeFromStringDash(String date) {
+		if (date == null) {
+			return null;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		Timestamp result = null;
+		try {
+			result = new Timestamp(sdf.parse(date).getTime());
+		} catch (ParseException e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return result;
+	}
+	
+	public static String getStringFromTimeStampTime(Timestamp date) {
+		if (date == null) {
+			return null;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		String result = sdf.format(date);
+		return result;
+	}
+	
+	public static String getStringTitleTimeStamp() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
+		String result = sdf.format(new Date());
+		return result;
+	}
+	
+	public static String getStringFromTimeStampTimeDash(Timestamp date) {
+		if (date == null) {
+			return null;
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String result = sdf.format(date);
+		return result;
+	}
+	
+	public static Timestamp getTimestampFromObject(Object o) {
+		if (o == null) {
+			return null;
+		}
+		return (Timestamp) o;
+	}
+	
+	public static String getStringDate(Timestamp date) {
+		if(date == null) {
+			return "";
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		return sdf.format(date);
+	}
+
+	public static String getStringTime(Timestamp date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+		return sdf.format(date);
+	}
+
+	public static String getStringDateDmy(Timestamp date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+		return sdf.format(date);
+	}
+
+	public static String getStringPeriod(Timestamp date) {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMM");
+		return sdf.format(date);
 	}
 	
 }

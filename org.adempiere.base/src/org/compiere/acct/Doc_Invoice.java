@@ -54,6 +54,7 @@ import org.compiere.model.X_M_Cost;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Trx;
+import org.idempiere.util.SIS_Utils;
 
 /**
  *  Post Invoice Documents.
@@ -1134,6 +1135,12 @@ public class Doc_Invoice extends Doc
 									oCurrencyId, as.getC_Currency_ID(),
 									oDateAcct, getC_ConversionType_ID(),
 									getAD_Client_ID(), getAD_Org_ID());
+							
+							//[PSI] - 8255 - add error message
+							if (estimatedAmt == null) {
+								MCurrency cur = MCurrency.get(oCurrencyId);
+								throw new RuntimeException("Please setup currency rate "+cur.getISO_Code()+" ("+SIS_Utils.getStringDate(oDateAcct)+")");
+							}
 	
 							allocationAmt = MConversionRate.convert(getCtx(), allocationAmt,
 									getC_Currency_ID(), as.getC_Currency_ID(),

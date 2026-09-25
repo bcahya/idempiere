@@ -497,6 +497,7 @@ public class ReportStarter implements ProcessCall, ClientProcess
   			if(uuPara != null && prevPara != null) {				  		
   				MPInstancePara securePara = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
   				MPInstancePara previewPara = new MPInstancePara(Env.getCtx(), prevPara, processInfo.getTransactionName());
+  				params.put("IsPreview", previewPara.getP_String());
   				if(securePara.getP_String().equals("Y") && previewPara.getP_String().equals("N")) {
   					int count = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
   							+ "and SIS_ProcessDetailReport_ID=?", trxName)

@@ -18,6 +18,7 @@
 package org.adempiere.webui.adwindow;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 import org.adempiere.base.IServiceHolder;
+import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.ClientInfo;
 import org.adempiere.webui.LayoutUtils;
 import org.adempiere.webui.action.Actions;
@@ -45,14 +47,22 @@ import org.adempiere.webui.util.Icon;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.adempiere.webui.window.Dialog;
 import org.compiere.model.GridTab;
+import org.compiere.model.MDocType;
+import org.compiere.model.MLocator;
+import org.compiere.model.MMovement;
+import org.compiere.model.MMovementLine;
+import org.compiere.model.MProduct;
 import org.compiere.model.MRole;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.MToolBarButton;
 import org.compiere.model.MUserQuery;
+import org.compiere.model.MWarehouse;
+import org.compiere.model.Query;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
+import org.compiere.util.Trx;
 import org.compiere.util.Util;
 import org.compiere.util.ValueNamePair;
 import org.zkoss.image.AImage;
@@ -573,8 +583,71 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
             }
         } else if (eventName.equals(Events.ON_CTRL_KEY))
         {
+        	// [SIS] enter event
 			KeyEvent keyEvent = (KeyEvent) event;
-
+			if(keyEvent.getKeyCode() ==  13) {				
+				String tableName = windowContent.getADTab().getSelectedTabpanel().getTableName();
+				String value = windowContent.getADTab().getSelectedTabpanel().get_ValueAsString("SIS_ProductValue");
+				if(tableName.equals("M_Movement") && value != null && value.length() > 0) {
+					String trxName = Trx.createTrxName("scanbarcode");
+			    	Trx trx = Trx.get(trxName, true);					
+					try {
+				    MMovement m = new MMovement(Env.getCtx(), windowContent.getADTab().getSelectedTabpanel().getRecord_ID(), trxName);
+				    MDocType dt = MDocType.get(m.getC_DocType_ID());				    
+				    if (!dt.get_ValueAsBoolean("SIS_UsingBarcode")) {
+						return;
+					}
+				    MProduct product = new Query(Env.getCtx(), MProduct.Table_Name, "value=?", null)
+				    		.setClient_ID().setParameters(value).first();
+						
+					
+					if(product == null) {
+						throw new AdempiereException("Product not registered yet");
+					}
+					boolean newProduct = true;
+					MMovementLine[] totalLine = m.getLines(true);
+					for (MMovementLine line : totalLine) {
+						if(line.getM_Product_ID() == product.getM_Product_ID()) {
+							line.setQtyEntered(line.getQtyEntered().add(BigDecimal.ONE));
+							line.saveEx();
+							newProduct = false;
+							break;
+						}
+					}
+					
+					if (newProduct) {
+						MLocator loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse());
+						MLocator locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo());
+						
+						if(loc == null) {
+							throw new AdempiereException("Default locator on Warehouse not configured yet!");
+						} else if (locTo == null) {
+							throw new AdempiereException("Default locator on Warehouse To not configured yet!");
+						}
+						
+						
+						MMovementLine newLine = new MMovementLine(m);
+						newLine.setM_Product_ID(product.getM_Product_ID());
+						newLine.setQtyEntered(BigDecimal.ONE);
+						newLine.setC_UOM_ID(product.getC_UOM_ID());
+						newLine.setM_Locator_ID(loc.get_ID());
+						newLine.setM_LocatorTo_ID(locTo.get_ID());
+						newLine.saveEx();
+					}
+					trx.commit();
+					} catch (Exception e) {						
+						trx.rollback();
+						throw new AdempiereException(e.getMessage());
+					
+					} finally {
+						fireButtonClickEvent(keyEvent, btnIgnore);
+						windowContent.getADTab().getSelectedTabpanel().getGridTab().dataRefresh();
+												
+						trx.close();
+					}
+				    
+				}
+			}
 			// If Quick form is opened then prevent toolbar shortcut key events.
 			if (!(keyEvent.getKeyCode() == KeyEvent.F2) && windowContent != null && windowContent.getOpenQuickFormTabs().size() > 0)
 				return;

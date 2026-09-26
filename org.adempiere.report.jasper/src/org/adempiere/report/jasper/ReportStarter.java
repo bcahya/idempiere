@@ -486,10 +486,19 @@ public class ReportStarter implements ProcessCall, ClientProcess
   					+ "from ad_pinstance_para pip "
   					+ "where pip.ad_pinstance_id = ? "
   					+ "and pip.parametername = 'Securecopy' ", processInfo.getAD_PInstance_ID());
-  			  			          
-  			if(uuPara != null) {  				  		
+
+  			String prevPara = DB.getSQLValueStringEx(processInfo.getTransactionName(),
+  					"select "
+  					+ "    pip.ad_pinstance_para_uu "
+  					+ "from ad_pinstance_para pip "
+  					+ "where pip.ad_pinstance_id = ? "
+  					+ "and pip.parametername = 'IsPreview' ", processInfo.getAD_PInstance_ID());
+  			
+  			if(uuPara != null && prevPara != null) {				  		
   				MPInstancePara securePara = new MPInstancePara(Env.getCtx(), uuPara, processInfo.getTransactionName());
-  				if(securePara.getP_String().equals("Y")) {
+  				MPInstancePara previewPara = new MPInstancePara(Env.getCtx(), prevPara, processInfo.getTransactionName());
+  				params.put("IsPreview", previewPara.getP_String());
+  				if(securePara.getP_String().equals("Y") && previewPara.getP_String().equals("N")) {
   					int count = new Query(ctx, SIS_MDocumentPrintLog.Table_Name ,"record_id=? and ad_table_id=? "
   							+ "and SIS_ProcessDetailReport_ID=?", trxName)
   							.setParameters(List.of(Record_ID,pi.getTable_ID(), reportId))

@@ -588,9 +588,10 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 			if(keyEvent.getKeyCode() ==  13) {				
 				String tableName = windowContent.getADTab().getSelectedTabpanel().getTableName();
 				String value = windowContent.getADTab().getSelectedTabpanel().get_ValueAsString("SIS_ProductValue");
-				if(tableName.equals("M_Movement") && value != null && value.length() > 0) {
+				String valueQty = windowContent.getADTab().getSelectedTabpanel().get_ValueAsString("SIS_QtyBarcode");
+				if(tableName.equals("M_Movement") && value != null && value.length() > 0 && valueQty!=null && valueQty.length() > 0) {
 					String trxName = Trx.createTrxName("scanbarcode");
-			    	Trx trx = Trx.get(trxName, true);					
+			    	Trx trx = Trx.get(trxName, true);
 					try {
 				    MMovement m = new MMovement(Env.getCtx(), windowContent.getADTab().getSelectedTabpanel().getRecord_ID(), trxName);
 				    MDocType dt = MDocType.get(m.getC_DocType_ID());				    
@@ -604,11 +605,12 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 					if(product == null) {
 						throw new AdempiereException("Product not registered yet");
 					}
+					BigDecimal qty = new BigDecimal(valueQty);
 					boolean newProduct = true;
 					MMovementLine[] totalLine = m.getLines(true);
 					for (MMovementLine line : totalLine) {
 						if(line.getM_Product_ID() == product.getM_Product_ID()) {
-							line.setQtyEntered(line.getQtyEntered().add(BigDecimal.ONE));
+							line.setQtyEntered(line.getQtyEntered().add(qty));
 							line.saveEx();
 							newProduct = false;
 							break;
@@ -628,7 +630,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 						
 						MMovementLine newLine = new MMovementLine(m);
 						newLine.setM_Product_ID(product.getM_Product_ID());
-						newLine.setQtyEntered(BigDecimal.ONE);
+						newLine.setQtyEntered(qty);
 						newLine.setC_UOM_ID(product.getC_UOM_ID());
 						newLine.setM_Locator_ID(loc.get_ID());
 						newLine.setM_LocatorTo_ID(locTo.get_ID());

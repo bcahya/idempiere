@@ -35,6 +35,7 @@ import org.compiere.model.MAccount;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MClientInfo;
 import org.compiere.model.MConversionRate;
+import org.compiere.model.MConversionType;
 import org.compiere.model.MCost;
 import org.compiere.model.MCostDetail;
 import org.compiere.model.MCostElement;
@@ -1139,7 +1140,14 @@ public class Doc_Invoice extends Doc
 							//[PSI] - 8255 - add error message
 							if (estimatedAmt == null) {
 								MCurrency cur = MCurrency.get(oCurrencyId);
-								throw new RuntimeException("Please setup currency rate "+cur.getISO_Code()+" ("+SIS_Utils.getStringDate(oDateAcct)+")");
+								int convTypeID = getC_ConversionType_ID();
+								if (convTypeID <= 0) {
+									convTypeID = MConversionType.getDefault(getAD_Client_ID());
+								}
+								MConversionType ct = new MConversionType(getCtx(), convTypeID, getTrxName());
+								throw new RuntimeException(
+										"Please setup currency rate " + cur.getISO_Code() + ", conversion type "
+												+ ct.getName() + " (" + SIS_Utils.getStringDate(oDateAcct) + ")");
 							}
 	
 							allocationAmt = MConversionRate.convert(getCtx(), allocationAmt,

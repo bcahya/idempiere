@@ -333,7 +333,10 @@ public class MMovement extends X_M_Movement implements DocAction
 							}
 						}
 						if (qtyma.subtract(qtyDiff).signum() != 0) {
-							m_processMsg = "@Line@ " + line.getLine() + ": @FillMandatory@ @M_AttributeSetInstance_ID@";
+							//[PSI] - 8284
+//							m_processMsg = "@Line@ " + line.getLine() + ": @FillMandatory@ @M_AttributeSetInstance_ID@";
+							m_processMsg = "@Line@ " + line.getLine() + " ASI From (product " + line.getM_Product().getName()
+									+ "): @FillMandatory@ @M_AttributeSetInstance_ID@";
 							return DocAction.STATUS_Invalid;
 						}
 					}
@@ -344,7 +347,10 @@ public class MMovement extends X_M_Movement implements DocAction
 				if (product != null && product.isASIMandatoryFor(null, false) && line.getM_AttributeSetInstanceTo_ID() == 0)
 				{
 					if (product.getAttributeSet() != null && !product.getAttributeSet().excludeTableEntry(MMovementLine.Table_ID, false)) { // incoming
-						m_processMsg = "@Line@ " + line.getLine() + ": @FillMandatory@ @M_AttributeSetInstanceTo_ID@";
+						//[PSI] - 8284
+//						m_processMsg = "@Line@ " + line.getLine() + ": @FillMandatory@ @M_AttributeSetInstance_ID@";
+						m_processMsg = "@Line@ " + line.getLine() + " ASI To (product " + line.getM_Product().getName()
+								+ "): @FillMandatory@ @M_AttributeSetInstance_ID@";
 						return DocAction.STATUS_Invalid;
 					}
 				}

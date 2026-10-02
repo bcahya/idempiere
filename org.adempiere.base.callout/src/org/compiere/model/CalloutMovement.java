@@ -188,10 +188,11 @@ public class CalloutMovement extends CalloutEngine
 				
 				if (available == null)
 					available = Env.ZERO;
-				if (available.signum() == 0)
-					mTab.fireDataStatusEEvent("NoQtyAvailable", "0", false);
-				else if (available.compareTo(MovementQty) < 0)
-					mTab.fireDataStatusEEvent("InsufficientQtyAvailable", available.toString(), false);
+				// Disable PSI Bayu- #8331
+//				if (available.signum() == 0)
+//					mTab.fireDataStatusEEvent("NoQtyAvailable", "0", false);
+//				else if (available.compareTo(MovementQty) < 0)
+//					mTab.fireDataStatusEEvent("InsufficientQtyAvailable", available.toString(), false);
 			}
 		}
 		// End Armen

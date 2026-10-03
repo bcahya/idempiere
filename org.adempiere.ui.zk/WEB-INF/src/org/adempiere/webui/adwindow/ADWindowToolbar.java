@@ -605,6 +605,28 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 					if(product == null) {
 						throw new AdempiereException("Product not registered yet");
 					}
+					
+					int loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse()).getM_Locator_ID();
+					int locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo()).getM_Locator_ID();
+					
+					if(m.get_ValueAsInt("SIS_RDO_ID") > 0) {
+						String sql = "SELECT SIS_Subbrand_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
+						int subbrand =  DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
+						
+						if(subbrand != product.get_ValueAsInt("SIS_Subbrand_ID")) {
+							throw new AdempiereException("Product Subbrand must same with RDO!");
+						}
+						
+						sql = "SELECT M_Locator_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
+						loc = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
+						
+						sql = "SELECT C_DocType_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
+						int docType = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
+						MDocType doc = MDocType.get(docType);
+						locTo = doc.get_ValueAsInt("SIS_WarehouseIntransit_ID"); 
+								
+					}
+					
 					BigDecimal qty = new BigDecimal(valueQty);
 					boolean newProduct = true;
 					MMovementLine[] totalLine = m.getLines(true);
@@ -617,13 +639,10 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 						}
 					}
 					
-					if (newProduct) {
-						MLocator loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse());
-						MLocator locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo());
-						
-						if(loc == null) {
+					if (newProduct) {											
+						if(loc <= 0) {
 							throw new AdempiereException("Default locator on Warehouse not configured yet!");
-						} else if (locTo == null) {
+						} else if (locTo <= 0) {
 							throw new AdempiereException("Default locator on Warehouse To not configured yet!");
 						}
 						
@@ -632,8 +651,8 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 						newLine.setM_Product_ID(product.getM_Product_ID());
 						newLine.setQtyEntered(qty);
 						newLine.setC_UOM_ID(product.getC_UOM_ID());
-						newLine.setM_Locator_ID(loc.get_ID());
-						newLine.setM_LocatorTo_ID(locTo.get_ID());
+						newLine.setM_Locator_ID(loc);
+						newLine.setM_LocatorTo_ID(locTo);
 						newLine.saveEx();
 					}
 					trx.commit();

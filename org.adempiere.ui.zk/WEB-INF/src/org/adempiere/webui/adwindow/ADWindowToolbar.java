@@ -608,6 +608,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 					
 					int loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse()).getM_Locator_ID();
 					int locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo()).getM_Locator_ID();
+					int rdoLineId = 0;
 					
 					if(m.get_ValueAsInt("SIS_RDO_ID") > 0) {
 						String sql = "SELECT SIS_Subbrand_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
@@ -617,13 +618,16 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 							throw new AdempiereException("Product Subbrand must same with RDO!");
 						}
 						
+						sql = "SELECT SIS_RDOLine_ID FROM SIS_RDOLine WHERE SIS_RDO_ID=? AND SIS_Subbrand_ID=? LIMIT 1 ";
+						rdoLineId = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"),subbrand);
+						
 						sql = "SELECT M_Locator_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
 						loc = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
 						
 						sql = "SELECT C_DocType_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
 						int docType = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
 						MDocType doc = MDocType.get(docType);
-						locTo = doc.get_ValueAsInt("SIS_WarehouseIntransit_ID"); 
+						locTo = doc.get_ValueAsInt("SIS_LocatorIntransit_ID"); 
 								
 					}
 					
@@ -653,6 +657,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 						newLine.setC_UOM_ID(product.getC_UOM_ID());
 						newLine.setM_Locator_ID(loc);
 						newLine.setM_LocatorTo_ID(locTo);
+						newLine.set_ValueOfColumn("SIS_RDOLine_ID", rdoLineId);
 						newLine.saveEx();
 					}
 					trx.commit();

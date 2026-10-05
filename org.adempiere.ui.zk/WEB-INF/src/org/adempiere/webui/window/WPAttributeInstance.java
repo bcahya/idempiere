@@ -67,6 +67,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	String isRMA = "";
 	int locatorID = 0;
 	int m_inoutline_id = 0;
+	int m_WindowNoParent = 0;
 	
 	/**
 	 * 	Constructor
@@ -77,7 +78,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	 * 	@param C_BPartner_ID bp
 	 */
 	public WPAttributeInstance(String title,
-		int M_Warehouse_ID, int M_Locator_ID, int M_Product_ID, int C_BPartner_ID)
+		int M_Warehouse_ID, int M_Locator_ID, int M_Product_ID, int C_BPartner_ID, int m_WindowNoParent)
 	{
 		super ();
 		this.setTitle(Msg.getMsg(Env.getCtx(), "PAttributeInstance") + title);
@@ -97,6 +98,9 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			});
 		}
 		this.setSclass("pattribute-instance-dialog");
+		
+		//[PSI] - 8342
+		this.m_WindowNoParent = m_WindowNoParent;
 		
 		init (M_Warehouse_ID, M_Locator_ID, M_Product_ID, C_BPartner_ID);
 		AEnv.showCenterScreen(this);
@@ -221,8 +225,8 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	private void dynInit(int C_BPartner_ID)
 	{
 		//[PSI] - 8342
-		isRMA = Env.getContext(Env.getCtx(), "1|+SIS_IsRMA");
-		m_inoutline_id = Env.getContextAsInt(Env.getCtx(), "1|M_InOutLine_ID");
+		isRMA = Env.getContext(Env.getCtx(), m_WindowNoParent, "+SIS_IsRMA");
+		m_inoutline_id = Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOutLine_ID");
 		if (m_inoutline_id > 0) {
 			MInOutLine iol = new MInOutLine(Env.getCtx(), m_inoutline_id, null);
 			locatorID = iol.getM_Locator_ID();

@@ -1039,9 +1039,14 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 			DB.close(rs, pstmt);
 			rs = null; pstmt = null;
 		}
-		//		
+		//
+		
+		//[PSI] - 8342
+//		final WPAttributeInstance pai = new WPAttributeInstance(title, 
+//			M_Warehouse_ID, M_Locator_ID, m_M_Product_ID, m_C_BPartner_ID);
 		final WPAttributeInstance pai = new WPAttributeInstance(title, 
-			M_Warehouse_ID, M_Locator_ID, m_M_Product_ID, m_C_BPartner_ID);
+				M_Warehouse_ID, M_Locator_ID, m_M_Product_ID, m_C_BPartner_ID, m_WindowNoParent);
+		
 		pai.addEventListener(DialogEvents.ON_WINDOW_CLOSE, new EventListener<Event>() {
 
 			@Override

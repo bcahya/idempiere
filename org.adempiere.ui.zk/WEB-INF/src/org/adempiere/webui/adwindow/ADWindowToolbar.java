@@ -585,95 +585,102 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
         {
         	// [SIS] enter event
 			KeyEvent keyEvent = (KeyEvent) event;
-			if(keyEvent.getKeyCode() ==  13) {				
+			if (keyEvent.getKeyCode() == 13) {
 				String tableName = windowContent.getADTab().getSelectedTabpanel().getTableName();
 				String value = windowContent.getADTab().getSelectedTabpanel().get_ValueAsString("SIS_ProductValue");
 				String valueQty = windowContent.getADTab().getSelectedTabpanel().get_ValueAsString("SIS_QtyBarcode");
-				if(tableName.equals("M_Movement") && value != null && value.length() > 0 && valueQty!=null && valueQty.length() > 0) {
+			 
+				if (tableName.equals("M_Movement") && value != null && value.length() > 0
+						&& valueQty != null && valueQty.length() > 0) {
+			 
 					String trxName = Trx.createTrxName("scanbarcode");
-			    	Trx trx = Trx.get(trxName, true);
+					Trx trx = Trx.get(trxName, true);
 					try {
-				    MMovement m = new MMovement(Env.getCtx(), windowContent.getADTab().getSelectedTabpanel().getRecord_ID(), trxName);
-				    MDocType dt = MDocType.get(m.getC_DocType_ID());				    
-				    if (!dt.get_ValueAsBoolean("SIS_UsingBarcode")) {
-						return;
-					}
-				    MProduct product = new Query(Env.getCtx(), MProduct.Table_Name, "value=?", null)
-				    		.setClient_ID().setParameters(value).first();
-						
-					
-					if(product == null) {
-						throw new AdempiereException("Product not registered yet");
-					}
-					
-					int loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse()).getM_Locator_ID();
-					int locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo()).getM_Locator_ID();					
-					
-					if(m.get_ValueAsInt("SIS_RDO_ID") > 0) {
-						String sql = "SELECT SIS_Subbrand_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
-						int subbrand =  DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
-						
-						if(subbrand != product.get_ValueAsInt("SIS_Subbrand_ID")) {
-							throw new AdempiereException("Product Subbrand must same with RDO!");
-						}													
-						
-						sql = "SELECT M_Locator_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
-						loc = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
-						
-						sql = "SELECT C_DocType_ID FROM SIS_RDO WHERE SIS_RDO_ID=? ";
-						int docType = DB.getSQLValue(trxName, sql, m.get_ValueAsInt("SIS_RDO_ID"));
-						MDocType doc = MDocType.get(docType);
-						locTo = doc.get_ValueAsInt("SIS_LocatorIntransit_ID"); 
-								
-					}
-					
-					BigDecimal qty = new BigDecimal(valueQty);
-					boolean newProduct = true;
-					MMovementLine[] totalLine = m.getLines(true);
-					BigDecimal currentQty = new BigDecimal(m.get_ValueAsString("SIS_QtyBarcode"));
-					for (MMovementLine line : totalLine) {
-						if(line.getM_Product_ID() == product.getM_Product_ID()) {
-							line.setQtyEntered(line.getQtyEntered().add(qty));
-							line.saveEx();
-							newProduct = false;							
-							break;
+						MMovement m = new MMovement(Env.getCtx(),
+								windowContent.getADTab().getSelectedTabpanel().getRecord_ID(), trxName);
+						MDocType dt = MDocType.get(m.getC_DocType_ID());
+						if (!dt.get_ValueAsBoolean("SIS_UsingBarcode")) {
+							return;
 						}
-						currentQty = currentQty.add(line.getMovementQty());
-					}
-					
-					if (newProduct) {											
-						if(loc <= 0) {
-							throw new AdempiereException("Default locator on Warehouse not configured yet!");
-						} else if (locTo <= 0) {
-							throw new AdempiereException("Default locator on Warehouse To not configured yet!");
+			 
+						MProduct product = new Query(Env.getCtx(), MProduct.Table_Name, "value=?", null)
+								.setClient_ID().setParameters(value).first();
+						if (product == null) {
+							throw new AdempiereException("Product not registered yet");
 						}
-						
-						int rdoLine = DB.getSQLValue(trxName, "SELECT SIS_RDOLine_ID FROM SIS_RDOLine WHERE SIS_RDO_ID=? "
-								+ " AND MovementQty > ? ORDER BY SIS_RDOLine_ID ASC LIMIT 1 ", m.get_ValueAsInt("SIS_RDO_ID"),currentQty);
-						if(rdoLine <= 0) {
-							throw new AdempiereException("Qty Movement line has reach Qty RDO Line!");
+			 
+						BigDecimal qty = new BigDecimal(valueQty);
+						if (qty.signum() <= 0) {
+							throw new AdempiereException("Qty must be greater than 0");
 						}
-						MMovementLine newLine = new MMovementLine(m);
-						newLine.setM_Product_ID(product.getM_Product_ID());
-						newLine.setQtyEntered(qty);
-						newLine.setC_UOM_ID(product.getC_UOM_ID());
-						newLine.setM_Locator_ID(loc);
-						newLine.setM_LocatorTo_ID(locTo);
-						newLine.set_ValueOfColumn("SIS_RDOLine_ID", rdoLine);
-						newLine.saveEx();
-					}
-					trx.commit();
-					} catch (Exception e) {						
+			 
+						int loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse()).getM_Locator_ID();
+						int locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo()).getM_Locator_ID();
+						int rdoID = m.get_ValueAsInt("SIS_RDO_ID");
+			 
+						if (rdoID > 0) {
+							int subbrand = DB.getSQLValue(trxName,
+									"SELECT SIS_Subbrand_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
+							if (subbrand != product.get_ValueAsInt("SIS_Subbrand_ID")) {
+								throw new AdempiereException("Product Subbrand must same with RDO!");
+							}
+			 
+							loc = DB.getSQLValue(trxName, "SELECT M_Locator_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
+							int docType = DB.getSQLValue(trxName, "SELECT C_DocType_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
+							locTo = MDocType.get(docType).get_ValueAsInt("SIS_LocatorIntransit_ID");
+			 
+							List<List<Object>> rdoLines = DB.getSQLArrayObjectsEx(trxName,
+									"SELECT SIS_RDOLine_ID, MovementQty FROM SIS_RDOLine "
+									+ "WHERE SIS_RDO_ID=?  ORDER BY SIS_RDOLine_ID ASC",
+									rdoID);
+			 
+							BigDecimal qtyLeft = qty;
+							if (rdoLines != null) {
+								for (List<Object> row : rdoLines) {
+									if (qtyLeft.signum() <= 0) {
+										break;
+									}
+									int rdoLineID = ((Number) row.get(0)).intValue();
+									BigDecimal rdoQty = (BigDecimal) row.get(1);
+									if (rdoQty == null) {
+										rdoQty = Env.ZERO;
+									}
+			 
+									BigDecimal mapped = DB.getSQLValueBDEx(trxName,
+											"SELECT COALESCE(SUM(MovementQty),0) FROM M_MovementLine "
+											+ "WHERE M_Movement_ID=? AND SIS_RDOLine_ID=?",
+											m.getM_Movement_ID(), rdoLineID);
+									if (mapped == null) {
+										mapped = Env.ZERO;
+									}
+			 
+									BigDecimal remaining = rdoQty.subtract(mapped);
+									if (remaining.signum() <= 0) {
+										continue;
+									}
+			 
+									BigDecimal toAdd = qtyLeft.min(remaining);
+									addToMovementLine(m, product, rdoLineID, toAdd, loc, locTo);
+									qtyLeft = qtyLeft.subtract(toAdd);
+								}
+							}
+			 
+							if (qtyLeft.signum() > 0) {
+								throw new AdempiereException("Qty Movement line has reach Qty RDO Line!");
+							}
+						} else {
+							addToMovementLine(m, product, 0, qty, loc, locTo);
+						}
+			 
+						trx.commit();
+					} catch (Exception e) {
 						trx.rollback();
 						throw new AdempiereException(e.getMessage());
-					
 					} finally {
 						fireButtonClickEvent(keyEvent, btnIgnore);
 						windowContent.getADTab().getSelectedTabpanel().getGridTab().dataRefresh();
-												
 						trx.close();
 					}
-				    
 				}
 			}
 			// If Quick form is opened then prevent toolbar shortcut key events.
@@ -705,7 +712,44 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
         		desktop.setCloseTabWithShortcut(true);
         }
     }
-
+    /**
+     * Tambah qty ke movement line yang cocok (produk + RDO line yang sama).
+     * Jika belum ada, buat movement line baru.
+     * rdoLineID = 0 berarti movement tanpa RDO.
+     */
+    private void addToMovementLine(MMovement m, MProduct product, int rdoLineID,
+    		BigDecimal addQty, int loc, int locTo) {
+     
+    	for (MMovementLine line : m.getLines(true)) {
+    		if (line.getM_Product_ID() == product.getM_Product_ID()
+    				&& line.get_ValueAsInt("SIS_RDOLine_ID") == rdoLineID) {
+    			BigDecimal newQty = line.getMovementQty().add(addQty);
+    			line.setMovementQty(newQty);
+    			line.setQtyEntered(newQty);
+    			line.saveEx();
+    			return;
+    		}
+    	}
+     
+    	if (loc <= 0) {
+    		throw new AdempiereException("Default locator on Warehouse not configured yet!");
+    	} else if (locTo <= 0) {
+    		throw new AdempiereException("Default locator on Warehouse To not configured yet!");
+    	}
+     
+    	MMovementLine newLine = new MMovementLine(m);
+    	newLine.setM_Product_ID(product.getM_Product_ID());
+    	newLine.setMovementQty(addQty);
+    	newLine.setQtyEntered(addQty);
+    	newLine.setC_UOM_ID(product.getC_UOM_ID());
+    	newLine.setM_Locator_ID(loc);
+    	newLine.setM_LocatorTo_ID(locTo);
+    	if (rdoLineID > 0) {
+    		newLine.set_ValueOfColumn("SIS_RDOLine_ID", rdoLineID);
+    	}
+    	newLine.saveEx();
+    }
+     
     /**
      * Handle ON_Click event for button.<br/>
      * Call register {@link ToolbarListener}.

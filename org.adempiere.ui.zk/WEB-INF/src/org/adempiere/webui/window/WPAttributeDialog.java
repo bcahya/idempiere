@@ -513,7 +513,7 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 			return false;
 		}
 
-		cbNewEdit.setEnabled(isAllowedToCreateAndUpdate);
+		cbNewEdit.setEnabled(isAllowedToCreateAndUpdate  && Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOut_ID") >0);
 
 		//	New/Edit Window
 		if (!m_productWindow)

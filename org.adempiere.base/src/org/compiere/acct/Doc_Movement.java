@@ -28,6 +28,8 @@ import org.compiere.model.MMovementLine;
 import org.compiere.model.MMovementLineMA;
 import org.compiere.model.MProduct;
 import org.compiere.model.ProductCost;
+import org.compiere.model.X_M_Locator;
+import org.compiere.util.DB;
 import org.compiere.util.Env;
 
 /**
@@ -185,6 +187,8 @@ public class Doc_Movement extends Doc
 			{
 				costs = BigDecimal.ZERO;
 			}
+			
+			int C_CostCenter_ID = 0;
 
 			//  ** Inventory       DR      CR
 			dr = fact.createLine(line,
@@ -196,6 +200,14 @@ public class Doc_Movement extends Doc
 			dr.setM_AttributeSetInstance_ID(line.getM_AttributeSetInstance_ID());
 			dr.setM_Warehouse_ID(getM_Warehouse_ID());
 			dr.setQty(line.getQty().negate());	//	outgoing
+			
+			X_M_Locator locFrom = new X_M_Locator(getCtx(), line.getC_LocFrom_ID(), getTrxName());
+			C_CostCenter_ID = DB.getSQLValue("SELECT id FROM C_CostCenter where value = ?", 
+					locFrom.getM_Warehouse().getValue());
+			if (C_CostCenter_ID > 0) {
+				dr.set_Value("c_costcenter_id", C_CostCenter_ID);
+			}
+			
 			if (isReversal(line))
 			{
 				//	Set AmtAcctDr from Original Movement
@@ -217,6 +229,14 @@ public class Doc_Movement extends Doc
 			cr.setM_AttributeSetInstance_ID(line.getM_AttributeSetInstanceTo_ID());
 			cr.setM_Warehouse_ID(getM_WarehouseTo_ID());
 			cr.setQty(line.getQty());
+			
+			X_M_Locator locTo = new X_M_Locator(getCtx(), line.getC_LocTo_ID(), getTrxName());
+			C_CostCenter_ID = DB.getSQLValue("SELECT id FROM C_CostCenter where value = ?", 
+					locTo.getM_Warehouse().getValue());
+			if (C_CostCenter_ID > 0) {
+				dr.set_Value("c_costcenter_id", C_CostCenter_ID);
+			}
+			
 			if (isReversal(line))
 			{
 				//	Set AmtAcctCr from Original Movement

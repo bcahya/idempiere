@@ -32,6 +32,8 @@ import org.adempiere.webui.theme.ThemeManager;
 import org.adempiere.webui.util.ZKUpdateUtil;
 import org.compiere.minigrid.ColumnInfo;
 import org.compiere.minigrid.IDColumn;
+import org.compiere.model.MInOutLine;
+import org.compiere.model.MLocator;
 import org.compiere.model.MSysConfig;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
@@ -43,9 +45,9 @@ import org.zkoss.zk.ui.event.EventListener;
 import org.zkoss.zk.ui.event.Events;
 import org.zkoss.zul.Borderlayout;
 import org.zkoss.zul.Center;
+import org.zkoss.zul.Hbox;
 import org.zkoss.zul.North;
 import org.zkoss.zul.South;
-import org.zkoss.zul.Hbox;
 
 
 /**
@@ -60,7 +62,13 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	 * generated serial id
 	 */
 	private static final long serialVersionUID = -4052029122256207113L;
-
+	
+	//[PSI] - 8342
+	String isRMA = "";
+	int locatorID = 0;
+	int m_inoutline_id = 0;
+	int m_WindowNoParent = 0;
+	
 	/**
 	 * 	Constructor
 	 * 	@param title title
@@ -70,7 +78,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	 * 	@param C_BPartner_ID bp
 	 */
 	public WPAttributeInstance(String title,
-		int M_Warehouse_ID, int M_Locator_ID, int M_Product_ID, int C_BPartner_ID)
+		int M_Warehouse_ID, int M_Locator_ID, int M_Product_ID, int C_BPartner_ID, int m_WindowNoParent)
 	{
 		super ();
 		this.setTitle(Msg.getMsg(Env.getCtx(), "PAttributeInstance") + title);
@@ -90,6 +98,9 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			});
 		}
 		this.setSclass("pattribute-instance-dialog");
+		
+		//[PSI] - 8342
+		this.m_WindowNoParent = m_WindowNoParent;
 		
 		init (M_Warehouse_ID, M_Locator_ID, M_Product_ID, C_BPartner_ID);
 		AEnv.showCenterScreen(this);
@@ -119,6 +130,7 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		{
 			log.log(Level.SEVERE, "", e);
 		}
+		
 	}	// init	
 
 	private Borderlayout mainLayout = new Borderlayout();
@@ -212,6 +224,14 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 	 */
 	private void dynInit(int C_BPartner_ID)
 	{
+		//[PSI] - 8342
+		isRMA = Env.getContext(Env.getCtx(), m_WindowNoParent, "+SIS_IsRMA");
+		m_inoutline_id = Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOutLine_ID");
+		if (m_inoutline_id > 0) {
+			MInOutLine iol = new MInOutLine(Env.getCtx(), m_inoutline_id, null);
+			locatorID = iol.getM_Locator_ID();
+		}
+		
 		if (log.isLoggable(Level.CONFIG)) log.config("C_BPartner_ID=" + C_BPartner_ID);
 		if (C_BPartner_ID != 0)
 		{
@@ -259,6 +279,26 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 			}
 		}	//	BPartner != 0
 
+		//[PSI] - 8342
+		if (isRMA != null && isRMA.equalsIgnoreCase("Y")) {
+			if (locatorID > 0) {
+				s_sqlWhere = "s.M_Product_ID=? AND l.m_locator_id=?"; 
+				s_sqlWhereWithoutWarehouse = "s.M_Product_ID=? AND l.m_locator_id=?";
+			}
+			if (m_inoutline_id > 0) {
+				String sqlAdd = 
+						" and exists ( "
+						+ "	select "
+						+ "		1 "
+						+ "	from m_inoutlinema ma "
+						+ "	where ma.m_inoutline_id = ? "
+						+ "	and ma.m_attributesetinstance_id = s.m_attributesetinstance_id "
+						+ ") ";
+				s_sqlWhereWithoutWarehouse += sqlAdd;
+				s_sqlWhere += sqlAdd;
+			}
+		}
+		
 		m_sql = m_table.prepareTable (s_layout, s_sqlFrom, 
 					m_M_Warehouse_ID == 0 ? s_sqlWhereWithoutWarehouse : s_sqlWhere, false, "s")
 				+ " GROUP BY s.M_AttributeSetInstance_ID,asi.Description,asi.Lot,asi.SerNo,asi.GuaranteeDate,l.Value,s.M_Locator_ID,p.GuaranteeDaysMin,p.GuaranteeDays"
@@ -292,8 +332,23 @@ public class WPAttributeInstance extends Window implements EventListener<Event>
 		{
 			pstmt = DB.prepareStatement(sql, null);
 			pstmt.setInt(1, m_M_Product_ID);
-			if (m_M_Warehouse_ID != 0)
-				pstmt.setInt(2, m_M_Warehouse_ID);
+			
+			//[PSI] - 8342
+//			if (m_M_Warehouse_ID != 0)
+//				pstmt.setInt(2, m_M_Warehouse_ID);
+			if (isRMA != null && isRMA.equalsIgnoreCase("Y")) {
+				if (locatorID > 0) {
+					pstmt.setInt(2, locatorID);
+				} else {
+					if (m_M_Warehouse_ID != 0)
+						pstmt.setInt(2, m_M_Warehouse_ID);
+				}
+				pstmt.setInt(3, m_inoutline_id);
+			} else {
+				if (m_M_Warehouse_ID != 0)
+					pstmt.setInt(2, m_M_Warehouse_ID);
+			}
+			
 			rs = pstmt.executeQuery();
 			m_table.loadTable(rs);
 		}

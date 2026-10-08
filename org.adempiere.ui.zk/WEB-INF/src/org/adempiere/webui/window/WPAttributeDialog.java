@@ -383,7 +383,9 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 			else
 				cbNewEdit.setLabel(Msg.getMsg(Env.getCtx(), "EditRecord"));
 			cbNewEdit.addEventListener(Events.ON_CHECK, this);
+			if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0) {			
 			row.appendChild(cbNewEdit);
+			}
 			bSelect.setLabel(Msg.getMsg(Env.getCtx(), "SelectExisting"));
 			if (ThemeManager.isUseFontIconForImage())
 				bSelect.setIconSclass(Icon.getIconSclass(Icon.PATTRIBUTE));
@@ -457,7 +459,9 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 					row = new Row();
 					row.setParent(rows);
 					m_row++;
-					row.appendChild(bLot);
+					if(Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0) {					
+						row.appendChild(bLot);
+					}
 					bLot.addEventListener(Events.ON_CLICK, this);
 					LayoutUtils.addSclass("txt-btn", bLot);
 				}
@@ -513,7 +517,7 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 			return false;
 		}
 
-		cbNewEdit.setEnabled(isAllowedToCreateAndUpdate  && Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOut_ID") >0);
+		cbNewEdit.setEnabled(isAllowedToCreateAndUpdate);
 
 		//	New/Edit Window
 		if (!m_productWindow)

@@ -201,6 +201,7 @@ public class Doc_Movement extends Doc
 			dr.setM_Warehouse_ID(getM_Warehouse_ID());
 			dr.setQty(line.getQty().negate());	//	outgoing
 			
+			//[PSI] - 8638
 			X_M_Locator locFrom = new X_M_Locator(getCtx(), line.getC_LocFrom_ID(), getTrxName());
 			C_CostCenter_ID = DB.getSQLValue("SELECT id FROM C_CostCenter where value = ?", 
 					locFrom.getM_Warehouse().getValue());
@@ -230,11 +231,12 @@ public class Doc_Movement extends Doc
 			cr.setM_Warehouse_ID(getM_WarehouseTo_ID());
 			cr.setQty(line.getQty());
 			
+			//[PSI] - 8638
 			X_M_Locator locTo = new X_M_Locator(getCtx(), line.getC_LocTo_ID(), getTrxName());
 			C_CostCenter_ID = DB.getSQLValue("SELECT id FROM C_CostCenter where value = ?", 
 					locTo.getM_Warehouse().getValue());
 			if (C_CostCenter_ID > 0) {
-				dr.set_Value("c_costcenter_id", C_CostCenter_ID);
+				cr.set_Value("c_costcenter_id", C_CostCenter_ID);
 			}
 			
 			if (isReversal(line))

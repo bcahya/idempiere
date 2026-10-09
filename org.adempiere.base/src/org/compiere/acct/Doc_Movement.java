@@ -235,7 +235,7 @@ public class Doc_Movement extends Doc
 			//[PSI] - 8638
 			X_M_Locator locTo = new X_M_Locator(getCtx(), ml.getM_LocatorTo_ID(), getTrxName());
 			C_CostCenter_ID = DB.getSQLValueEx(getTrxName(), "select c_costcenter_id from c_costcenter where value = ? ", 
-					locFrom.getM_Warehouse().getValue());
+					locTo.getM_Warehouse().getValue());
 			if (C_CostCenter_ID > 0) {
 				cr.set_Value("c_costcenter_id", C_CostCenter_ID);
 			}

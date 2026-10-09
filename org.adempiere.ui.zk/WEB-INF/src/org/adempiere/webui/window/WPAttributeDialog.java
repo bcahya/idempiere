@@ -384,15 +384,17 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 				cbNewEdit.setLabel(Msg.getMsg(Env.getCtx(), "EditRecord"));
 			cbNewEdit.addEventListener(Events.ON_CHECK, this);
 			if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0) {			
-			row.appendChild(cbNewEdit);
+				row.appendChild(cbNewEdit);
 			}
-			bSelect.setLabel(Msg.getMsg(Env.getCtx(), "SelectExisting"));
-			if (ThemeManager.isUseFontIconForImage())
-				bSelect.setIconSclass(Icon.getIconSclass(Icon.PATTRIBUTE));
-			else
-				bSelect.setImage(ThemeManager.getThemeResource("images/PAttribute16.png"));
-			bSelect.addEventListener(Events.ON_CLICK, this);
-			row.appendChild(bSelect);
+			if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOutLine_ID") == 0) {			
+				bSelect.setLabel(Msg.getMsg(Env.getCtx(), "SelectExisting"));
+				if (ThemeManager.isUseFontIconForImage())
+					bSelect.setIconSclass(Icon.getIconSclass(Icon.PATTRIBUTE));
+				else
+					bSelect.setImage(ThemeManager.getThemeResource("images/PAttribute16.png"));
+				bSelect.addEventListener(Events.ON_CLICK, this);
+				row.appendChild(bSelect);
+			}
 			ZKUpdateUtil.setHflex(bSelect, "1");
 			northRows.appendChild(row);
 			
@@ -421,13 +423,12 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 					+ "WHERE p.M_AttributeSet_ID=" + m_masi.getM_AttributeSet_ID()
 					+ " AND p.M_Product_ID=l.M_Product_ID) "
 					+ " AND l.M_Product_ID = ? ";
-			fieldLot = new Listbox();
+			fieldLot = new Listbox();			
 			fieldLot.setMold("select");
 			KeyNamePair[] keyNamePairs = DB.getKeyNamePairsEx(sql, true, m_M_Product_ID);
 			for (KeyNamePair pair : keyNamePairs) {
 				fieldLot.appendItem(pair.getName(), pair.getKey());
-			}
-						
+			}							
 			label = new Label (Msg.translate(Env.getCtx(), "M_Lot_ID"));
 			row = new Row();
 			row.setParent(rows);
@@ -518,7 +519,7 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		}
 
 		cbNewEdit.setEnabled(isAllowedToCreateAndUpdate);
-
+		
 		//	New/Edit Window
 		if (!m_productWindow)
 		{
@@ -547,6 +548,16 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		row.appendChild(label.rightAlign());
 		row.appendChild(fieldDescription);
 		ZKUpdateUtil.setHflex(fieldDescription, "1");
+		
+		if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") > 0) {
+			fieldLot.setDisabled(true);
+			fieldGuaranteeDate.setDisabled(true);
+			fieldLotString.setDisabled(true);
+		}
+		
+		if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOutLine_ID") > 0) {
+			cbNewEdit.setDisabled(true);
+		}
 		
 		return true;
 	}	//	initAttribute

@@ -204,7 +204,7 @@ public class Doc_Movement extends Doc
 			//[PSI] - 8638
 			MMovementLine ml = (MMovementLine)line.getPO();
 			X_M_Locator locFrom = new X_M_Locator(getCtx(), ml.getM_Locator_ID(), getTrxName());
-			C_CostCenter_ID = DB.getSQLValue("SELECT id FROM C_CostCenter where value = ?", 
+			C_CostCenter_ID = DB.getSQLValueEx(getTrxName(), "select c_costcenter_id from c_costcenter where value = ? ", 
 					locFrom.getM_Warehouse().getValue());
 			if (C_CostCenter_ID > 0) {
 				dr.set_Value("c_costcenter_id", C_CostCenter_ID);
@@ -234,8 +234,8 @@ public class Doc_Movement extends Doc
 			
 			//[PSI] - 8638
 			X_M_Locator locTo = new X_M_Locator(getCtx(), ml.getM_LocatorTo_ID(), getTrxName());
-			C_CostCenter_ID = DB.getSQLValue("SELECT id FROM C_CostCenter where value = ?", 
-					locTo.getM_Warehouse().getValue());
+			C_CostCenter_ID = DB.getSQLValueEx(getTrxName(), "select c_costcenter_id from c_costcenter where value = ? ", 
+					locFrom.getM_Warehouse().getValue());
 			if (C_CostCenter_ID > 0) {
 				cr.set_Value("c_costcenter_id", C_CostCenter_ID);
 			}

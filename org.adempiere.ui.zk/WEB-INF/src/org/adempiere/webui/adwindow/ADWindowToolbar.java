@@ -666,7 +666,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 							}
 			 
 							if (qtyLeft.signum() > 0) {
-								throw new AdempiereException("Qty Movement line has reach Qty RDO Line!");
+								throw new AdempiereException("Product Subbrand must be equal with RDO Subbrand");
 							}
 						} else {
 							addToMovementLine(m, product, 0, qty, loc, locTo);

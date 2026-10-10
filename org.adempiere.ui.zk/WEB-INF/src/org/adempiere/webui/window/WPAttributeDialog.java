@@ -557,6 +557,7 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		
 		if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOutLine_ID") > 0) {
 			cbNewEdit.setDisabled(true);
+			fieldLot.setDisabled(true);
 		}
 		
 		return true;

@@ -104,7 +104,7 @@ public class CalloutBankStatement extends CalloutEngine
 			if (chargeCandidate.signum() > 0 && !mField.getColumnName().equals("InterestAmt"))
 			{
 				BigDecimal interestCandidate = bd.subtract(charge); // StmtAmt - TrxAmt - ChargeAmt
-				mTab.setValue("InterestAmt", interestCandidate);
+				mTab.setValue("ChargeAmt", interestCandidate);
 			}
 			else
 			{

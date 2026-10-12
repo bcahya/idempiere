@@ -197,7 +197,7 @@ public class InventoryCountCreate extends SvrProcess
 	
 		//[SIS] 8392
 		if (p_SIS_Subbrand_ID != 0)
-			sql.append(" AND p.SIS_Subbrand_ID = ? ");			
+			sql.append(" AND p.SIS_Subbrand_ID IN (?) ");			
 		
 		//	Do not overwrite existing records
 		if (!p_DeleteOld)
@@ -223,10 +223,10 @@ public class InventoryCountCreate extends SvrProcess
 				pstmt.setString(index++, p_LocatorValue.toUpperCase());
 			if (p_ProductValue != null) 
 				pstmt.setString(index++, p_ProductValue.toUpperCase());
-			if (!p_DeleteOld)
-				pstmt.setInt(index++, p_M_Inventory_ID);
 			if (p_SIS_Subbrand_ID != 0)
 				pstmt.setInt(index++, p_SIS_Subbrand_ID);
+			if (!p_DeleteOld)
+				pstmt.setInt(index++, p_M_Inventory_ID);
 			rs = pstmt.executeQuery ();
 			while (rs.next ())
 			{

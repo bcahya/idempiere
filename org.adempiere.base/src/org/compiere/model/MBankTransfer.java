@@ -50,8 +50,7 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 	 */
 	private static final long serialVersionUID = -6091468617167291836L;
 
-	//[PSI] - 7724
-	public static final String SIS_BANKTRANSFER_CHARGE_ID = "SIS_BANKTRANSFER_CHARGE_ID";
+	//[PSI] - 7724	
 	public static final String SIS_BANKTRANSFER_BP_ID = "SIS_BANKTRANSFER_BP_ID";
 	
     /**
@@ -215,12 +214,9 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;
 
-		//[PSI] - 7724
-		int chargeID = MSysConfig.getIntValue(SIS_BANKTRANSFER_CHARGE_ID, 0, getAD_Client_ID());
+		//[PSI] - 7724		
 		int bpID = MSysConfig.getIntValue(SIS_BANKTRANSFER_BP_ID, 0, getAD_Client_ID());
-		if (chargeID <= 0 ) {
-			m_processMsg = "System Configurator SIS_BANKTRANSFER_CHARGE_ID not configured yet!";
-		} else if (bpID <= 0 ) {
+		if (bpID <= 0 ) {
 			m_processMsg = "System Configurator SIS_BANKTRANSFER_BP_ID not configured yet!";
 		} else if (getC_DocType_ID() <= 0) {
 			m_processMsg = "Please fill Document Type!";
@@ -268,13 +264,12 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 				return status;
 		}
 
-		//[PSI] - 7724
-		int chargeID = MSysConfig.getIntValue(SIS_BANKTRANSFER_CHARGE_ID, 0, getAD_Client_ID());
+		//[PSI] - 7724		
 		int bpID = MSysConfig.getIntValue(SIS_BANKTRANSFER_BP_ID, 0, getAD_Client_ID());
 		MDocType dt = MDocType.get(getC_DocType_ID());
 		int docTypeAPID = dt.get_ValueAsInt("SIS_DocTypeBTAPPayment_ID");
 		int docTypeARID = dt.get_ValueAsInt("SIS_DocTypeBTARReceipt_ID");
-		
+		int chargeID = dt.get_ValueAsInt("SIS_ChargeBankTransfer_ID");
 		m_processMsg = ModelValidationEngine.get().fireDocValidate(this, ModelValidator.TIMING_BEFORE_COMPLETE);
 		if (m_processMsg != null)
 			return DocAction.STATUS_Invalid;

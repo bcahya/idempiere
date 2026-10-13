@@ -622,7 +622,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 							int subbrand = DB.getSQLValue(trxName,
 									"SELECT SIS_Subbrand_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
 							if (subbrand != product.get_ValueAsInt("SIS_Subbrand_ID")) {
-								throw new AdempiereException("Product Subbrand must same with RDO!");
+								throw new AdempiereException("Product Subbrand must be equal with RDO Subbrand!");
 							}
 			 
 							loc = DB.getSQLValue(trxName, "SELECT M_Locator_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
@@ -666,7 +666,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 							}
 			 
 							if (qtyLeft.signum() > 0) {
-								throw new AdempiereException("Qty Movement line has reach Qty RDO Line!");
+								throw new AdempiereException("Product Subbrand must be equal with RDO Subbrand");
 							}
 						} else {
 							addToMovementLine(m, product, 0, qty, loc, locTo);
@@ -726,6 +726,7 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
     			BigDecimal newQty = line.getMovementQty().add(addQty);
     			line.setMovementQty(newQty);
     			line.setQtyEntered(newQty);
+    			line.setTargetQty(line.getMovementQty());
     			line.saveEx();
     			return;
     		}

@@ -199,7 +199,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 	 */
 	public MInventoryLine[] getLines (boolean requery)
 	{
-		if (m_lines != null && !requery) {
+		if (m_lines != null && m_lines.length > 0  && !requery) {//[PSI] - 8430
 			set_TrxName(m_lines, get_TrxName());
 			return m_lines;
 		}

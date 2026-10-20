@@ -1014,19 +1014,19 @@ public class InfoProductWindow extends InfoWindow {
 		}
 
 		//  Table
-		ListModelTable model = new ListModelTable(data);
-
-		Vector<String> columnNames = new Vector<String>();
-		columnNames.add(Msg.translate(Env.getCtx(), "Date"));
-		columnNames.add(Msg.translate(Env.getCtx(), "QtyOnHand"));
-		columnNames.add(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
-		columnNames.add(Msg.translate(Env.getCtx(), "QtyOrdered"));
-		columnNames.add(Msg.translate(Env.getCtx(), "QtyReserved"));
-		columnNames.add(Msg.translate(Env.getCtx(), "M_Locator_ID"));
-		columnNames.add(Msg.translate(Env.getCtx(), "M_AttributeSetInstance_ID"));
-		columnNames.add(Msg.translate(Env.getCtx(), "DocumentNo"));
-		columnNames.add(Msg.translate(Env.getCtx(), "M_Warehouse_ID"));		
-		m_tableAtp.setData(model, columnNames);
+//		ListModelTable model = new ListModelTable(data);
+//
+//		Vector<String> columnNames = new Vector<String>();
+//		columnNames.add(Msg.translate(Env.getCtx(), "Date"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "QtyOnHand"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "C_BPartner_ID"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "QtyOrdered"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "QtyReserved"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "M_Locator_ID"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "M_AttributeSetInstance_ID"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "DocumentNo"));
+//		columnNames.add(Msg.translate(Env.getCtx(), "M_Warehouse_ID"));		
+//		m_tableAtp.setData(model, columnNames);
 	}	//	initAtpTab
 	
 	/**
@@ -1114,8 +1114,8 @@ public class InfoProductWindow extends InfoWindow {
 			if (relatedTbl != null && relatedTbl.getModel() != null)
 				relatedTbl.getModel().clear();
 			
-			if (m_tableAtp != null && m_tableAtp.getModel() != null)
-				m_tableAtp.getModel().clear();
+//			if (m_tableAtp != null && m_tableAtp.getModel() != null)
+//				m_tableAtp.getModel().clear();
 			
 			if (productpriceTbl != null && productpriceTbl.getModel() != null)
 				productpriceTbl.getModel().clear();

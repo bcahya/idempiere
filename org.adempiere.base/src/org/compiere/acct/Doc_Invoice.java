@@ -476,6 +476,24 @@ public class Doc_Invoice extends Doc
 						fact.createLine (p_lines[i],
 								p_lines[i].getAccount(ProductCost.ACCTTYPE_P_TDiscountGrant, as),
 								getC_Currency_ID(), dAmt, null);
+						
+						//[PSI] - 8502
+						MInvoiceLine il = (MInvoiceLine)p_lines[i].getPO();
+						if (il.getC_Invoice().getM_PriceList().isTaxIncluded()) {
+							BigDecimal discountDiff = il.getPriceList().subtract(il.getPriceActual()).subtract(dAmt).abs();
+							if (discountDiff.signum() != 0) {
+								FactLine tl = fact.createLine(null, m_taxes[i].getAccount(DocTax.ACCTTYPE_TaxDue, as),
+										getC_Currency_ID(), discountDiff, null);
+								if (tl != null)
+									tl.setC_Tax_ID(m_taxes[i].getC_Tax_ID());
+								
+								tl = fact.createLine(null, m_taxes[i].getAccount(DocTax.ACCTTYPE_TaxDue, as),
+										getC_Currency_ID(), null, discountDiff);
+								if (tl != null)
+									tl.setC_Tax_ID(m_taxes[i].getC_Tax_ID());
+							}
+						}
+						
 					}
 				}
 				fact.createLine (p_lines[i],
@@ -558,6 +576,24 @@ public class Doc_Invoice extends Doc
 						fact.createLine (p_lines[i],
 								p_lines[i].getAccount (ProductCost.ACCTTYPE_P_TDiscountGrant, as),
 								getC_Currency_ID(), null, dAmt);
+						
+						//[PSI] - 8502
+						MInvoiceLine il = (MInvoiceLine)p_lines[i].getPO();
+						if (il.getC_Invoice().getM_PriceList().isTaxIncluded()) {
+							BigDecimal discountDiff = il.getPriceList().subtract(il.getPriceActual()).subtract(dAmt).abs();
+							if (discountDiff.signum() != 0) {
+								FactLine tl = fact.createLine(null, m_taxes[i].getAccount(DocTax.ACCTTYPE_TaxDue, as),
+										getC_Currency_ID(), discountDiff, null);
+								if (tl != null)
+									tl.setC_Tax_ID(m_taxes[i].getC_Tax_ID());
+								
+								tl = fact.createLine(null, m_taxes[i].getAccount(DocTax.ACCTTYPE_TaxDue, as),
+										getC_Currency_ID(), null, discountDiff);
+								if (tl != null)
+									tl.setC_Tax_ID(m_taxes[i].getC_Tax_ID());
+							}
+						}
+						
 					}
 				}
 				fact.createLine (p_lines[i],

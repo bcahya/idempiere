@@ -68,6 +68,9 @@ public class InventoryCountCreate extends SvrProcess
 	//[SIS] 8392
 	private int p_SIS_Subbrand_ID = 0;
 	
+	//[SIS] 8545
+	private int p_SIS_MClass_ID = 0;
+	
 	/** Inventory Line				*/
 	private MInventoryLine	m_line = null; 
 	private Timestamp oldDateMPolicy = null;
@@ -99,6 +102,8 @@ public class InventoryCountCreate extends SvrProcess
 				p_DeleteOld = "Y".equals(para[i].getParameter());
 			else if (name.equals("SIS_Subbrand_ID"))
 				p_SIS_Subbrand_ID = para[i].getParameterAsInt();
+			else if (name.equals("SIS_MClass_ID"))
+				p_SIS_MClass_ID = para[i].getParameterAsInt();
 			else
 				MProcessPara.validateUnknownParameter(getProcessInfo().getAD_Process_ID(), para[i]);
 		}
@@ -197,7 +202,10 @@ public class InventoryCountCreate extends SvrProcess
 	
 		//[SIS] 8392
 		if (p_SIS_Subbrand_ID != 0)
-			sql.append(" AND p.SIS_Subbrand_ID IN (?) ");			
+			sql.append(" AND p.SIS_Subbrand_ID IN (?) ");
+		
+		if(p_SIS_MClass_ID != 0)
+			sql.append(" AND p.SIS_MClass_ID IN (?) ");
 		
 		//	Do not overwrite existing records
 		if (!p_DeleteOld)

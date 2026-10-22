@@ -233,6 +233,8 @@ public class InventoryCountCreate extends SvrProcess
 				pstmt.setString(index++, p_ProductValue.toUpperCase());
 			if (p_SIS_Subbrand_ID != 0)
 				pstmt.setInt(index++, p_SIS_Subbrand_ID);
+			if (p_SIS_MClass_ID != 0)
+				pstmt.setInt(index++, p_SIS_MClass_ID);
 			if (!p_DeleteOld)
 				pstmt.setInt(index++, p_M_Inventory_ID);
 			rs = pstmt.executeQuery ();

@@ -70,7 +70,6 @@ public class InventoryCountCreate extends SvrProcess
 
 	//[SIS] 8545
 	private int p_SIS_MClass_ID = 0;
-	
 	/** Inventory Line				*/
 	private MInventoryLine	m_line = null; 
 	private Timestamp oldDateMPolicy = null;
@@ -206,7 +205,6 @@ public class InventoryCountCreate extends SvrProcess
 		
 		if(p_SIS_MClass_ID != 0)
 			sql.append(" AND p.SIS_MClass_ID IN (?) ");	
-		
 		//	Do not overwrite existing records
 		if (!p_DeleteOld)
 			sql.append(" AND NOT EXISTS (SELECT * FROM M_InventoryLine il ")

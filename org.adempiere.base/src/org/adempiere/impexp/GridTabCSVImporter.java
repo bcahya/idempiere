@@ -80,6 +80,7 @@ import org.supercsv.io.CsvMapReader;
 import org.supercsv.io.ICsvMapReader;
 import org.supercsv.prefs.CsvPreference;
 
+//[PSI] - 8220
 /**
  * CSV Importer for GridTab
  * @author Carlos Ruiz
@@ -668,6 +669,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 							currentGridTab.navigateCurrent();
 							if (! isDetail) {
 								for (GridTab child : childs) {
+									child.getTableModel().setImportingMode(true,trxName);
 									child.query(false);
 								}
 							}
@@ -708,6 +710,11 @@ public class GridTabCSVImporter implements IGridTabImporter
 									if (currentGridTab.getTabNo() == 0)
 										Env.setContext(Env.getCtx(), currentGridTab.getWindowNo(), currentGridTab.getKeyColumnName(), recordId);
 									Env.setContext(Env.getCtx(), currentGridTab.getWindowNo(), currentGridTab.getTabNo(), currentGridTab.getKeyColumnName(), Integer.toString(recordId));
+								}
+							}
+							if (! isDetail) {
+								for (GridTab child : childs) {
+									child.query(false);
 								}
 							}
 						} else {
@@ -1471,6 +1478,8 @@ public class GridTabCSVImporter implements IGridTabImporter
 			return (new Optional(new ParseDate(DisplayType.DEFAULT_DATE_FORMAT)));
 		} else if (DisplayType.DateTime == field.getDisplayType()) {
 			return (new Optional(new ParseDate(DisplayType.DEFAULT_TIMESTAMP_FORMAT)));
+		} else if (DisplayType.isTimestampWithTimeZone(field.getDisplayType())) {
+			return (new Optional(new ParseDate(DisplayType.DEFAULT_TIMESTAMP_WITH_TIMEZONE_FORMAT)));
 		} else if (DisplayType.Time == field.getDisplayType()) {
 			return (new Optional(new ParseDate(DisplayType.DEFAULT_TIME_FORMAT)));
 		} else if (DisplayType.Integer == field.getDisplayType()) {

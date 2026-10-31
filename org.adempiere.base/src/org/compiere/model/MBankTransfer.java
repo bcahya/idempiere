@@ -221,6 +221,11 @@ public class MBankTransfer extends X_C_BankTransfer implements DocAction {
 		} else if (getC_DocType_ID() <= 0) {
 			m_processMsg = "Please fill Document Type!";
 		}
+		MBPartner bp = MBPartner.get(getCtx(), bpID);
+		if (bp.get_ID() <= 0) {
+			m_processMsg = "BP for System configurator SIS_BANKTRANSFER_BP_ID ("+bpID+") not found!";
+		}
+		
 		MDocType dt = MDocType.get(getC_DocType_ID());
 		int docTypeAPID = dt.get_ValueAsInt("SIS_DocTypeBTAPPayment_ID");
 		int docTypeARID = dt.get_ValueAsInt("SIS_DocTypeBTARReceipt_ID");

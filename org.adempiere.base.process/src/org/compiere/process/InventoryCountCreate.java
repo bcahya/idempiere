@@ -171,13 +171,51 @@ public class InventoryCountCreate extends SvrProcess
 			if (log.isLoggable(Level.FINE)) log.fine("'0' Inserted #" + no);
 		}
 		
+		
+		
 		StringBuilder sql = new StringBuilder("SELECT s.M_Product_ID, s.M_Locator_ID, s.M_AttributeSetInstance_ID,");
-							   sql.append(" s.QtyOnHand, p.M_AttributeSet_ID ,s.DateMaterialPolicy");
-							   sql.append(" FROM M_Product p");
-							   sql.append(" INNER JOIN M_StorageOnHand s ON (s.M_Product_ID=p.M_Product_ID)");
-							   sql.append(" INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID) ");
-							   sql.append("WHERE l.M_Warehouse_ID=?");
-							   sql.append(" AND p.IsActive='Y' AND p.IsStocked='Y' and p.ProductType='I'");
+		sql.append(" s.QtyOnHand, p.M_AttributeSet_ID ,s.DateMaterialPolicy");
+		sql.append(" FROM M_Product p");
+		sql.append(" INNER JOIN M_StorageOnHand s ON (s.M_Product_ID=p.M_Product_ID)");
+		sql.append(" INNER JOIN M_Locator l ON (s.M_Locator_ID=l.M_Locator_ID) ");
+		sql.append("WHERE l.M_Warehouse_ID=?");
+		sql.append(" AND p.IsActive='Y' AND p.IsStocked='Y' and p.ProductType='I'");
+		sql.append(" AND p.IsActive='Y' AND p.IsStocked='Y' and p.ProductType='I'");
+
+		String productAccess = " and case when ( "
+				+ "	select "
+				+ "		coalesce(sis_isproductaccess,'N') = 'Y' pacc "
+				+ "	from c_doctype "
+				+ "	where c_doctype_id = @C_DocType_ID@ "
+				+ ") "
+				+ "then p.m_product_id in ( "
+				+ "	select "
+				+ "		m_product_id "
+				+ "	from "
+				+ "		sis_productdtaccess "
+				+ "	where "
+				+ "		isactive = 'Y' "
+				+ "		and c_doctype_id = @C_DocType_ID@) "
+				+ "else true end "
+				+ "and case when ( "
+				+ "	select "
+				+ "		coalesce(sis_ispcaccess,'N') = 'Y' pacc "
+				+ "	from c_doctype "
+				+ "	where c_doctype_id = @C_DocType_ID@ "
+				+ ") "
+				+ "then p.m_product_id in ("
+				+ "	select "
+				+ "		p.m_product_id "
+				+ "	from "
+				+ "		sis_pcdtaccess pa "
+				+ "	inner join m_product p "
+				+ "		on p.m_product_category_id = pa.m_product_category_id "
+				+ "	where  "
+				+ "		pa.isactive = 'Y' "
+				+ "		and pa.c_doctype_id = @C_DocType_ID@) "
+				+ "else true end ";
+		productAccess = productAccess.replaceAll("@C_DocType_ID@", String.valueOf(m_inventory.getC_DocType_ID()));							   
+		sql.append(productAccess);
 		//
 		if (p_M_Locator_ID != 0)
 			sql.append(" AND s.M_Locator_ID=?");

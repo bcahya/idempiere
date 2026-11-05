@@ -2,11 +2,16 @@ package org.idempiere.util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -14,7 +19,6 @@ import org.adempiere.exceptions.AdempiereException;
 import org.compiere.model.MAcctSchema;
 import org.compiere.model.MCharge;
 import org.compiere.model.MDocType;
-import org.compiere.model.MInOut;
 import org.compiere.model.MInOutLine;
 import org.compiere.model.MInvoiceLine;
 import org.compiere.model.MMovement;
@@ -26,28 +30,316 @@ import org.compiere.model.MTable;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.PO;
 import org.compiere.util.DB;
+import org.compiere.util.DBException;
 import org.compiere.util.Env;
 
 public class SIS_Utils {
+	
+	public static String convertListIntegerToWhereIn(List<Integer> list) {
+		StringBuilder sb = new StringBuilder();
+		for (int a = 0; a < list.size(); a++) {
+			if (a > 0) {
+				sb.append(", ");
+			}
+			sb.append(String.valueOf((Integer) list.get(a)));
+		}
+		return sb.toString();
+	}
+
+	public static final PreparedStatement setMultiParam(PreparedStatement ps, List<Object> params) throws SQLException {
+		int index = 0;
+		for (Object param : params) {
+			index++;
+			if (param == null)
+				ps.setObject(index, null);
+			else if (param instanceof String)
+				ps.setString(index, (String) param);
+			else if (param instanceof Integer)
+				ps.setInt(index, ((Integer) param).intValue());
+			else if (param instanceof BigDecimal)
+				ps.setBigDecimal(index, (BigDecimal) param);
+			else if (param instanceof Timestamp)
+				ps.setTimestamp(index, (Timestamp) param);
+			else if (param instanceof Boolean)
+				ps.setString(index, ((Boolean) param).booleanValue() ? "Y" : "N");
+			else if (param instanceof byte[])
+				ps.setBytes(index, (byte[]) param);
+			else
+				throw new DBException("Unknown parameter type " + index + " - " + param);
+		}
+		return ps;
+	}
+	
+	public static String convertListStringToWhereIn(List<String> list) {
+		StringBuilder sb = new StringBuilder();
+		for (int a = 0; a < list.size(); a++) {
+			if (a > 0) {
+				sb.append(", ");
+			}
+			sb.append("'");
+			sb.append((String) list.get(a));
+			sb.append("'");
+		}
+		return sb.toString();
+	}
+	
+	public static List<Object> getListSingleObjectFromSQL(StringBuilder sql, List<Object> params) {
+		List<Object> listObject = new ArrayList<>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql.toString(), null);
+			ps = setMultiParam(ps, params);
+			ps.setFetchSize(100);
+			rs = ps.executeQuery();
+			while (rs.next()) {
+				listObject.add(rs.getObject(1));
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e.getMessage());
+		} finally {
+			DB.close(rs, ps);
+			ps = null;
+			rs = null;
+		}
+		return listObject;
+	}
+
+	public static List<Object> getListObjectFromSQL(String sql, List<Object> params) {
+		List<Object> listObject = new ArrayList<>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, null);
+			DB.setParameters(ps, params);
+			ps.setFetchSize(100);
+			rs = ps.executeQuery();
+			ResultSetMetaData metadata = rs.getMetaData();
+			int countColumn = metadata.getColumnCount();
+			while (rs.next()) {
+				LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+				for (int a = 1; a <= countColumn; a++) {
+					map.put(metadata.getColumnName(a), rs.getObject(metadata.getColumnName(a)));
+				}
+				listObject.add(map);
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e.getMessage());
+		} finally {
+			DB.close(rs, ps);
+			ps = null;
+			rs = null;
+		}
+		return listObject;
+	}
+
+	public static List<Object> getListObjectFromSQL(String sql, List<Object> params, String trxName) {
+		List<Object> listObject = new ArrayList<>();
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+		try {
+			ps = DB.prepareStatement(sql, trxName);
+			DB.setParameters(ps, params);
+			ps.setFetchSize(100);
+			rs = ps.executeQuery();
+			ResultSetMetaData metadata = rs.getMetaData();
+			int countColumn = metadata.getColumnCount();
+			while (rs.next()) {
+				LinkedHashMap<String, Object> map = new LinkedHashMap<>();
+				for (int a = 1; a <= countColumn; a++) {
+					map.put(metadata.getColumnName(a), rs.getObject(metadata.getColumnName(a)));
+				}
+				listObject.add(map);
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e.getMessage());
+		} finally {
+			DB.close(rs, ps);
+			ps = null;
+			rs = null;
+		}
+		return listObject;
+	}
+
+	public static List<Integer> getListIntegerFromSQL(String sql, List<Object> params) {
+		List<Integer> listData = new ArrayList<>();
+		try {
+			for (LinkedHashMap<String, Object> map : getListMapFromSQL(sql, params)) {
+				int countKey = 0;
+				for (String key : map.keySet()) {
+					if (countKey > 1) {
+						throw new Exception("Key of map must be 1!");
+					}
+					countKey += 1;
+					if (!(map.get(key) instanceof Integer)) {
+						throw new Exception("Value is not Integer!");
+					}
+					listData.add((int) map.get(key));
+				}
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return listData;
+	}
+	
+	public static List<Integer> getListIntegerFromSQL(String sql, List<Object> params, String trxName) {
+		List<Integer> listData = new ArrayList<>();
+		try {
+			for (LinkedHashMap<String, Object> map : getListMapFromSQL(sql, params, trxName)) {
+				int countKey = 0;
+				for (String key : map.keySet()) {
+					if (countKey > 1) {
+						throw new Exception("Key of map must be 1!");
+					}
+					countKey += 1;
+					if (!(map.get(key) instanceof Integer)) {
+						throw new Exception("Value is not Integer!");
+					}
+					listData.add((int) map.get(key));
+				}
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return listData;
+	}
+
+	public static String getWhereInFromListInteger(String sql, List<Object> params) {
+		return convertListIntegerToWhereIn(getListIntegerFromSQL(sql, params));
+	}
+
+	public static List<String> getListStringFromSQL(String sql, List<Object> params) {
+		List<String> listData = new ArrayList<>();
+		try {
+			for (LinkedHashMap<String, Object> map : getListMapFromSQL(sql, params)) {
+				int countKey = 0;
+				for (String key : map.keySet()) {
+					if (countKey > 1) {
+						throw new Exception("Key of map must be 1!");
+					}
+					countKey += 1;
+					if (!(map.get(key) instanceof String)) {
+						throw new Exception("Value is not String!");
+					}
+					listData.add((String) map.get(key));
+				}
+			}
+		} catch (Exception e) {
+			throw new AdempiereException(e.getMessage());
+		}
+		return listData;
+	}
+
+	public static String getWhereInFromListString(String sql, List<Object> params) {
+		return convertListStringToWhereIn(getListStringFromSQL(sql, params));
+	}
+
+	public static LinkedHashMap<String, Object> getMapFromSQL(String sql, List<Object> params) {
+		List<Object> listObject = getListObjectFromSQL(sql, params);
+		LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+		if (listObject.size() > 0) {
+			map = (LinkedHashMap<String, Object>) listObject.get(0);
+		}
+		return map;
+	}
+
+	public static LinkedHashMap<String, Object> getMapFromSQL(String sql, List<Object> params, String trxName) {
+		List<Object> listObject = getListObjectFromSQL(sql, params, trxName);
+		LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+		if (listObject.size() > 0) {
+			map = (LinkedHashMap<String, Object>) listObject.get(0);
+		}
+		return map;
+	}
+
+	public static List<LinkedHashMap<String, Object>> getListMapFromSQL(String sql, List<Object> params) {
+		List<LinkedHashMap<String, Object>> resultList = new ArrayList<LinkedHashMap<String, Object>>();
+		List<Object> listObject = new ArrayList<Object>();
+
+		if (!sql.equals("")) {
+			listObject = getListObjectFromSQL(sql, params);
+		}
+
+		for (Object o : listObject) {
+			LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+			map = (LinkedHashMap<String, Object>) o;
+			resultList.add(map);
+		}
+		return resultList;
+	}
+
+	public static List<LinkedHashMap<String, Object>> getListMapFromSQL(String sql, List<Object> params, String trxName) {
+		List<LinkedHashMap<String, Object>> resultList = new ArrayList<LinkedHashMap<String, Object>>();
+		List<Object> listObject = new ArrayList<Object>();
+
+		if (!sql.equals("")) {
+			listObject = getListObjectFromSQL(sql, params, trxName);
+		}
+
+		for (Object o : listObject) {
+			LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
+			map = (LinkedHashMap<String, Object>) o;
+			resultList.add(map);
+		}
+		return resultList;
+	}
+	
+	public static List<Integer> getIncludedRoles(Integer ad_role_id){
+		List<Integer> listRoleID = new ArrayList<>();
+		listRoleID.add(ad_role_id);
+		drillIncludedRole(listRoleID, ad_role_id);
+		return listRoleID;
+	}
+	
+	static void drillIncludedRole(List<Integer> listRoleID, int ad_role_id) {
+		List<Object> params = new ArrayList<>();
+		params.clear();
+		params.add(ad_role_id);
+		List<Integer> lRoleID = getListIntegerFromSQL(
+				"select "
+				+ "    ri.included_role_id::int "
+				+ "from ad_role_included ri "
+				+ "inner join ad_role r "
+				+ "  on r.ad_role_id = ri.ad_role_id "
+				+ "where ri.ad_role_id = ? "
+				+ "and ri.isactive = 'Y' "
+				+ "and r.isactive = 'Y' ", params);
+		for (int rID: lRoleID) {
+			if (!listRoleID.contains(rID)) {
+				listRoleID.add(rID);
+			}
+			drillIncludedRole(listRoleID, rID);
+		}
+	}
+	
+	public String getWhereIncludedRole(Integer ad_role_id) {
+		return convertListIntegerToWhereIn(getIncludedRoles(ad_role_id));
+	}
 	
 	public static String getSQLAccess(
 			String m_tableName,
 			boolean isGrid
 			) {
 		Properties m_ctx = Env.getCtx();
-		MRole r = MRole.get(m_ctx, Env.getAD_Role_ID(m_ctx));
+		List<Integer> roleIDs = getIncludedRoles(Env.getAD_Role_ID(m_ctx));
 		MTable t = MTable.get(m_ctx, m_tableName);
 		String sqlAdd = "";
 		
 		//[PSI] - 7613 (Document Type Access)
 		if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnDocTypeAccess", false, Env.getAD_Client_ID(m_ctx)) 
-			&& !r.get_ValueAsBoolean("SIS_IsIgnoreDocTypeAccess") 
 			&& ((isGrid 
 					&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
 					&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) 
 					|| (!isGrid && m_tableName.equalsIgnoreCase(MDocType.Table_Name)))
 			) {
-			String colDT = "";
+			for (int roleID: roleIDs) {
+				MRole r = MRole.get(m_ctx, roleID);
+				if (r.get_ValueAsBoolean("SIS_IsIgnoreDocTypeAccess")) {
+					sqlAdd = "";
+					break;
+				}
+				String colDT = "";
 				if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocTypeTarget_ID)) {
 					colDT = MOrder.COLUMNNAME_C_DocTypeTarget_ID;
 				} else if (t.columnExistsInDB(MOrder.COLUMNNAME_C_DocType_ID)) {
@@ -58,35 +350,44 @@ public class SIS_Utils {
 							" AND "+m_tableName+"."+colDT
 							+ " IN (SELECT C_DocType_ID " 
 						      + "FROM SIS_RoleDocType " 
-						      + "WHERE AD_Role_ID=" 
-						      + r.get_ID()
+						      + "WHERE AD_Role_ID = " 
+						      + roleID
 						      + " AND ISActive = 'Y' " 
 						      + ")";
 				}
+			}
 		}
 		
 		//[PSI] - 7622 (Warehouse Access)
+		String sqlAddWH = "";
 		if (MSysConfig.getBooleanValue("SIS_ActivateAccessDocBasedOnWarehouseAccess", false, Env.getAD_Client_ID(m_ctx))
-				&& !r.get_ValueAsBoolean("SIS_IsIgnoreWarehouseAccess")
 				&& ((isGrid 
 						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocStatus)
 						&& t.columnExistsInDB(MOrder.COLUMNNAME_DocumentNo)) 
 						|| (!isGrid && m_tableName.equalsIgnoreCase(MWarehouse.Table_Name)))
 			) {
-			List<String> whs = new ArrayList<String>();
-			if (t.columnExistsInDB(MMovement.COLUMNNAME_M_Warehouse_ID)) {
-				whs.add(MOrder.COLUMNNAME_M_Warehouse_ID);
+			for (int roleID: roleIDs) {
+				MRole r = MRole.get(m_ctx, roleID);
+				if (r.get_ValueAsBoolean("SIS_IsIgnoreWarehouseAccess")) {
+					sqlAddWH = "";
+					break;
+				}
+				List<String> whs = new ArrayList<String>();
+				if (t.columnExistsInDB(MMovement.COLUMNNAME_M_Warehouse_ID)) {
+					whs.add(MOrder.COLUMNNAME_M_Warehouse_ID);
+				}
+				for (String colWH: whs) {
+					sqlAddWH += 
+							" AND "+m_tableName+"."+colWH
+							+ " IN (SELECT m_warehouse_id " 
+						      + "FROM SIS_RoleWarehouse " 
+						      + "WHERE AD_Role_ID =" 
+						      + roleID
+						      + " AND ISActive = 'Y' " 
+						      + ") ";
+				}
 			}
-			for (String colWH: whs) {
-				sqlAdd += 
-						" AND "+m_tableName+"."+colWH
-						+ " IN (SELECT m_warehouse_id " 
-					      + "FROM SIS_RoleWarehouse " 
-					      + "WHERE AD_Role_ID=" 
-					      + r.get_ID()
-					      + " AND ISActive = 'Y' " 
-					      + ") ";
-			}
+			sqlAdd += sqlAddWH;
 		}
 		return sqlAdd;
 	}

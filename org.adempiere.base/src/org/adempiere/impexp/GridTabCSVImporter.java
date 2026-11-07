@@ -125,6 +125,8 @@ public class GridTabCSVImporter implements IGridTabImporter
 	private Trx trx;
 	private String trxName;
 	private boolean isSingleTrx = false;
+	
+	private List<String> preProcessErrors; //[PSI] - 8705
 
 	/**	Logger			*/
 	private static final CLogger log = CLogger.getCLogger(GridTabCSVImporter.class);
@@ -197,7 +199,8 @@ public class GridTabCSVImporter implements IGridTabImporter
 			// pre-process to check for errors
 			preProcess(processUI, gridTab, indxDetail);
 
-			if ( !m_isError ) {
+			//[PSI] - 8705
+//			if ( !m_isError ) {
 
 				String logFileName = FileUtil.getTempMailName("Import_" + gridTab.getTableName(), "_log.csv");
 				logFile = new File(logFileName);
@@ -225,16 +228,29 @@ public class GridTabCSVImporter implements IGridTabImporter
 					StringBuilder rowResult = new StringBuilder();
 					boolean isDetail = false;
 
-					if (rawLine.charAt(0)==','){
-						isDetail=true;
-						//check out if master row comes empty  
-						Map<String, Object> rowMap = data.get(idx);
-						for(int i=0; i < indxDetail-1; i++){	
-							if(rowMap.get(header.get(i))!=null){
-								isDetail=false;
-								break;
-							}
-						}
+					//[PSI] - 8705
+//					if (rawLine.charAt(0)==','){
+//						isDetail=true;
+//						//check out if master row comes empty  
+//						Map<String, Object> rowMap = data.get(idx);
+//						for(int i=0; i < indxDetail-1; i++){	
+//							if(rowMap.get(header.get(i))!=null){
+//								isDetail=false;
+//								break;
+//							}
+//						}
+//					}
+					if (rawLine.startsWith(",")) {
+					    isDetail = true;
+					    Map<String, Object> rowMap = data.get(idx);
+					    if (rowMap != null) {
+					        for (int i = 0; i < indxDetail - 1; i++) {
+					            if (rowMap.get(header.get(i)) != null) {
+					                isDetail = false;
+					                break;
+					            }
+					        }
+					    }
 					}
 
 					if (!isMasterok && isDetail){
@@ -256,13 +272,32 @@ public class GridTabCSVImporter implements IGridTabImporter
 					}
 					if (trx != null)
 						trx.setDisplayName(GridTabCSVImporter.class.getName()+"_fileImport_" + gridTab.getTableName());
+					
+					//[PSI] - 8705
+					String preError = preProcessErrors.get(idx);
+					if (!Util.isEmpty(preError)) {
+					    setError(true);
+					    if (isDetail) {
+					        isDetailok = false;
+					    } else {
+					        isMasterok = false;
+					    }
+					    rowResult.append(preError);
+					    rawLine = rawLine + delimiterChar
+					            + quoteChar
+					            + preError.replace(quoteChar, "")
+					            + quoteChar + "\n";
+					    rowsTmpResult.add(rawLine);
+					    continue;
+					}
 
 					String recordResult = processRecord(importMode, gridTab, indxDetail, isDetail, idx, rowResult, childs);
 					rowResult.append(recordResult);
 
+					//[PSI] - 8705
 					// write
-					rawLine = rawLine + delimiterChar + quoteChar + rowResult.toString().replaceAll(delimiterChar, "") + quoteChar + "\n";
-					rowsTmpResult.add(rawLine);
+//					rawLine = rawLine + delimiterChar + quoteChar + rowResult.toString().replaceAll(delimiterChar, "") + quoteChar + "\n";
+//					rowsTmpResult.add(rawLine);
 					
 					if( isSingleTrx() && isError() )
 						break;
@@ -271,7 +306,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 
 				manageMasterTrx(gridTab,childs);
 
-			}
+//			}
 		} catch (IOException e) {
 			throw new AdempiereException(e);
 		} catch (Exception ex) {
@@ -317,6 +352,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 		locationFields = null;
 		isThereKey = false;
 		isThereDocAction = false;
+		preProcessErrors = new ArrayList<String>(); //[PSI] - 8705
 	}
 	
 	/**
@@ -535,12 +571,21 @@ public class GridTabCSVImporter implements IGridTabImporter
 					initIndx = endindx + 1;
 				}
 			}
-			if (isLineError && ! m_isError)
-				m_isError = true;
-			if (!m_isError) {
-				data.add(map);
-				rawData.add(rawLine);
+			
+			//[PSI] - 8705
+//			if (isLineError && ! m_isError)
+//				m_isError = true;
+//			if (!m_isError) {
+//				data.add(map);
+//				rawData.add(rawLine);
+//			}
+			if (isLineError) {
+			    m_isError = true;
 			}
+			data.add(map);
+			rawData.add(rawLine);
+			preProcessErrors.add(errMsg.toString());
+			
 			// write
 			rawLine = rawLine + delimiterChar + quoteChar + errMsg.toString().replaceAll(quoteChar, "") + quoteChar + "\n";
 			errFileW.write(rawLine);
@@ -553,55 +598,136 @@ public class GridTabCSVImporter implements IGridTabImporter
 	 * @param gridTab
 	 * @param childs
 	 */
-	private void manageMasterTrx(GridTab gridTab, List<GridTab> childs){
-		if (trx != null) {
-			try {
-				if (isError()) {
-					gridTab.dataDelete();
-					rollbackTrx();
-					setError(false);
-				} else {
-					boolean commit = false;
-					if (isThereDocAction) {
-	
-						boolean isError = false;
-						int AD_Process_ID = MColumn.get(Env.getCtx(), gridTab.getField("DocAction").getAD_Column_ID()).getAD_Process_ID(); 
-	
-						if (AD_Process_ID > 0){
-							String docResult = processDocAction(masterRecord, AD_Process_ID); 
-	
-							if (docResult.contains("error")) 
-								isError = true; 
-	
-							rowsTmpResult.set(0,rowsTmpResult.get(0).replace(quoteChar + "\n",docResult + quoteChar + "\n")); 
-						} else {
-							throwAdempiereException("No Process found for document action.");	  
-						}
-	
-						if (isError){
-							gridTab.dataDelete();
-							rollbackTrx();
-						} else {
-							commit = true;
-						}
-					} else {
-						commit = true;
-					}
-					if (commit) {
-						String commitResult = commitTrx();
-						if (isError()) {
-							rowsTmpResult.set(0,rowsTmpResult.get(0).replace(quoteChar + "\n",commitResult + quoteChar + "\n")); 
-							gridTab.dataDelete();
-							rollbackTrx();
-						}
-					}
-				}
-			} finally {
-				trx.close();
-				trx=null;
-			}
-		}
+	//[PSI]-8705
+//	private void manageMasterTrx(GridTab gridTab, List<GridTab> childs){
+//		if (trx != null) {
+//			try {
+//				if (isError()) {
+//					gridTab.dataDelete();
+//					rollbackTrx();
+//					setError(false);
+//				} else {
+//					boolean commit = false;
+//					if (isThereDocAction) {
+//	
+//						boolean isError = false;
+//						int AD_Process_ID = MColumn.get(Env.getCtx(), gridTab.getField("DocAction").getAD_Column_ID()).getAD_Process_ID(); 
+//	
+//						if (AD_Process_ID > 0){
+//							String docResult = processDocAction(masterRecord, AD_Process_ID); 
+//	
+//							if (docResult.contains("error")) 
+//								isError = true; 
+//	
+//							rowsTmpResult.set(0,rowsTmpResult.get(0).replace(quoteChar + "\n",docResult + quoteChar + "\n")); 
+//						} else {
+//							throwAdempiereException("No Process found for document action.");	  
+//						}
+//	
+//						if (isError){
+//							gridTab.dataDelete();
+//							rollbackTrx();
+//						} else {
+//							commit = true;
+//						}
+//					} else {
+//						commit = true;
+//					}
+//					if (commit) {
+//						String commitResult = commitTrx();
+//						if (isError()) {
+//							rowsTmpResult.set(0,rowsTmpResult.get(0).replace(quoteChar + "\n",commitResult + quoteChar + "\n")); 
+//							gridTab.dataDelete();
+//							rollbackTrx();
+//						}
+//					}
+//				}
+//			} finally {
+//				trx.close();
+//				trx=null;
+//			}
+//		}
+//
+//	}//manageMasterTrx
+	private void manageMasterTrx(GridTab gridTab, List<GridTab> childs) {
+	    if (trx == null)
+	        return;
+	    try {
+	        if (isError()) {
+	            gridTab.dataDelete();
+	            rollbackTrx();
+	        } else {
+	            boolean commit = false;
+	            if (isThereDocAction) {
+	                boolean docError = false;
+	                int AD_Process_ID = MColumn.get(
+	                        Env.getCtx(),
+	                        gridTab.getField("DocAction").getAD_Column_ID()
+	                ).getAD_Process_ID();
+	                if (AD_Process_ID > 0) {
 
+	                    String docResult = processDocAction(
+	                            masterRecord,
+	                            AD_Process_ID
+	                    );
+	                    if (docResult.toLowerCase().contains("error")
+	                            || docResult.toLowerCase().contains("could not")
+	                            || docResult.toLowerCase().contains("no workflow")) {
+
+	                        docError = true;
+	                    }
+	                    if (!rowsTmpResult.isEmpty()) {
+	                        int last = rowsTmpResult.size() - 1;
+
+	                        rowsTmpResult.set(
+	                                last,
+	                                rowsTmpResult.get(last).replace(
+	                                        quoteChar + "\n",
+	                                        docResult + quoteChar + "\n"
+	                                )
+	                        );
+	                    }
+	                } else {
+	                    throwAdempiereException(
+	                            "No Process found for document action."
+	                    );
+	                }
+	                if (docError) {
+	                    gridTab.dataDelete();
+	                    rollbackTrx();
+	                } else {
+	                    commit = true;
+	                }
+	            } else {
+	                commit = true;
+	            }
+	            if (commit) {
+	                String commitResult = commitTrx();
+	                if (isError()) {
+	                    if (!rowsTmpResult.isEmpty()) {
+	                        int last = rowsTmpResult.size() - 1;
+	                        rowsTmpResult.set(
+	                                last,
+	                                rowsTmpResult.get(last).replace(
+	                                        quoteChar + "\n",
+	                                        commitResult + quoteChar + "\n"
+	                                )
+	                        );
+	                    }
+	                    gridTab.dataDelete();
+	                    rollbackTrx();
+	                }
+	            }
+	        }
+	    } finally {
+	        trx.close();
+	        trx = null;
+	        trxName = null;
+	        setError(false);
+	        isMasterok = true;
+	        isDetailok = true;
+	        masterRecord = null;
+	    }
 	}//manageMasterTrx
 	
 	/**
@@ -616,6 +742,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 		rowsTmpResult.clear();
 		isMasterok = true;
 		isDetailok = true;
+		setError(false);//[PSI]-8705
 		
 	} //createTrx
 	
@@ -723,6 +850,7 @@ public class GridTabCSVImporter implements IGridTabImporter
 								currentGridTab.dataRefresh(true); 
 						}
 					} else {
+						setError(true); //[PSI] - 8705
 						ValueNamePair ppE = CLogger.retrieveWarning();
 						if (ppE==null)   
 							ppE = CLogger.retrieveError();

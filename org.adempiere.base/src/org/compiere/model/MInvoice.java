@@ -3201,10 +3201,11 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 			+ "currencyConvertInvoice(i.C_Invoice_ID,?,invoiceOpen(C_Invoice_ID,C_InvoicePaySchedule_ID),?)*i.MultiplierAP, "  //  7   #3, #4  Converted Open
 			+ "currencyConvertInvoice(i.C_Invoice_ID"                               //  8       AllowedDiscount
 			+ ",?,invoiceDiscount(i.C_Invoice_ID,?,C_InvoicePaySchedule_ID),i.DateInvoiced)*i.Multiplier*i.MultiplierAP,"               //  #5, #6
-			+ "i.MultiplierAP,bp.Name,bp.c_BPartner_ID "							//  9..11
+			+ "i.MultiplierAP,bp.Name,bp.c_BPartner_ID,co.documentno as no_po "							//  9..11
 			+ "FROM C_Invoice_v i"		//  corrected for CM/Split
 			+ " INNER JOIN C_Currency c ON (i.C_Currency_ID=c.C_Currency_ID) "
 			+ " INNER JOIN C_BPartner bp ON (i.C_BPartner_ID=bp.C_BPartner_ID) "
+			+ " LEFT JOIN C_Order co ON co.C_Order_ID = i.C_Order_ID "
 			+ "WHERE i.IsPaid='N' AND i.Processed='Y'"
 			+ " AND (i.C_BPartner_ID=?");                                           //  #7
 		if (sameBP)
@@ -3248,6 +3249,7 @@ public class MInvoice extends X_C_Invoice implements DocAction, IDocsPostProcess
 				line.add(rs.getTimestamp(1));       //  1-TrxDate
 				KeyNamePair pp = new KeyNamePair(rs.getInt(3), rs.getString(2));
 				line.add(pp);                       //  2-Value
+				line.add(rs.getString(12));
 				if (isMultiCurrency)
 				{
 					line.add(rs.getString(4));      //  3-Currency

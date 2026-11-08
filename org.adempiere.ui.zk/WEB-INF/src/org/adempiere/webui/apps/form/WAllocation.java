@@ -191,6 +191,9 @@ public class WAllocation extends Allocation
 	/** Status bar, bottom of {@link #allocationPanel} */
 	private Hlayout statusBar = new Hlayout();	
 	
+	private Label descLabel = new Label();
+	private Textbox descField = new Textbox();
+	
 	/**
 	 *  Layout {@link #form}
 	 *  @throws Exception
@@ -224,6 +227,8 @@ public class WAllocation extends Allocation
 		differenceField.setText("0");
 		differenceField.setReadonly(true);
 		differenceField.setStyle("text-align: right");
+		descLabel.setText(Msg.getMsg(Env.getCtx(), "Description"));
+		descField.setText("");
 		allocateButton.setLabel(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Process")));
 		allocateButton.addActionListener(this);
 		refreshButton.setLabel(Util.cleanAmp(Msg.getMsg(Env.getCtx(), "Refresh")));
@@ -410,7 +415,10 @@ public class WAllocation extends Allocation
 		ZKUpdateUtil.setHflex(differenceField, "true");
 		row.appendCellChild(differenceField);
 		if (maxWidth(SMALL_WIDTH-1))
-			row = rows.newRow();
+		row = rows.newRow();
+		row.appendCellChild(descLabel.rightAlign());
+		ZKUpdateUtil.setHflex(descField, "true");
+		row.appendCellChild(descField);	
 		row.appendCellChild(chargeLabel.rightAlign());
 		ZKUpdateUtil.setHflex(chargePick.getComponent(), "true");
 		row.appendCellChild(chargePick.getComponent());
@@ -781,7 +789,7 @@ public class WAllocation extends Allocation
 				public void run(String trxName)
 				{
 					statusBar.getChildren().clear();
-					allocation[0] = saveData(form.getWindowNo(), dateField.getValue(), paymentTable, invoiceTable, trxName);
+					allocation[0] = saveData(form.getWindowNo(), dateField.getValue(), paymentTable, invoiceTable, trxName, descField.getValue());
 					
 				}
 			});

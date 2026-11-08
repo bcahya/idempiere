@@ -591,7 +591,7 @@ public class Allocation
 	 * @param trxName
 	 * @return {@link MAllocationHdr}
 	 */
-	public MAllocationHdr saveData(int m_WindowNo, Timestamp dateTrx, IMiniTable payment, IMiniTable invoice, String trxName)
+	public MAllocationHdr saveData(int m_WindowNo, Timestamp dateTrx, IMiniTable payment, IMiniTable invoice, String trxName, String description)
 	{
 		if (m_noInvoices + m_noPayments == 0)
 			return null;
@@ -646,7 +646,11 @@ public class Allocation
 			dateTrx, C_Currency_ID, Env.getContext(Env.getCtx(), Env.AD_USER_NAME), trxName);
 		alloc.setAD_Org_ID(AD_Org_ID);
 		alloc.setC_DocType_ID(m_C_DocType_ID);
-		alloc.setDescription(alloc.getDescriptionForManualAllocation(m_C_BPartner_ID, trxName));
+		if(description != null && description.length() > 0) {
+			alloc.setDescription(description);		
+		} else {			
+			alloc.setDescription(alloc.getDescriptionForManualAllocation(m_C_BPartner_ID, trxName));
+		}
 		alloc.saveEx();
 		//	For all invoices
 		BigDecimal unmatchedApplied = Env.ZERO;

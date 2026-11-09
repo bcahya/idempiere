@@ -291,6 +291,7 @@ public class Allocation
 		invoiceTable.setColumnClass(i++, Boolean.class, false);         //  0-Selection
 		invoiceTable.setColumnClass(i++, Timestamp.class, true);        //  1-TrxDate
 		invoiceTable.setColumnClass(i++, String.class, true);           //  2-Value
+		invoiceTable.setColumnClass(i++, String.class, true);           //  2.1 - PO NO
 		if (isMultiCurrency)
 		{
 			invoiceTable.setColumnClass(i++, String.class, true);       //  3-Currency

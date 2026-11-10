@@ -63,13 +63,13 @@ public class Allocation
 	protected Timestamp allocDate = null;
 
 	//  Index	changed if multi-currency
-	private int         i_payment = 7;
+	private int         i_payment = 8;
 	//
-	private int         i_open = 6;
-	private int         i_discount = 7;
-	private int         i_writeOff = 8; 
-	private int         i_applied = 9;
-	private int 		i_overUnder = 10;
+	private int         i_open = 7;
+	private int         i_discount = 8;
+	private int         i_writeOff = 9; 
+	private int         i_applied = 10;
+	private int 		i_overUnder = 11;
 	
 	protected int         	m_AD_Org_ID = 0;
 
@@ -317,11 +317,11 @@ public class Allocation
 	 */
 	protected void prepareForCalculate(boolean isMultiCurrency)
 	{
-		i_open = isMultiCurrency ? 6 : 4;
-		i_discount = isMultiCurrency ? 7 : 5;
-		i_writeOff = isMultiCurrency ? 8 : 6;
-		i_applied = isMultiCurrency ? 9 : 7;
-		i_overUnder = isMultiCurrency ? 10 : 8;
+		i_open = isMultiCurrency ? 7 : 5;
+		i_discount = isMultiCurrency ? 8 : 6;
+		i_writeOff = isMultiCurrency ? 9 : 7;
+		i_applied = isMultiCurrency ? 10 : 8;
+		i_overUnder = isMultiCurrency ? 11 : 9;
 	}   //  loadBPartner
 	
 	/**

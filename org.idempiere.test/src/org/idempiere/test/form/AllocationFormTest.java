@@ -155,7 +155,7 @@ public class AllocationFormTest extends AbstractTestCase {
 		assertEquals(new BigDecimal("0.00"), allocation.getTotalDifference().setScale(2, RoundingMode.HALF_UP), "Unexpected Total Applied Difference");
 		assertTrue(allocation.isOkToAllocate(), "Invoice and payment applied total is different: " + allocation.getTotalDifference().toPlainString());
 		
-		MAllocationHdr allocationHdr = allocation.saveData(0, today, paymentTable, invoiceTable, getTrxName());
+		MAllocationHdr allocationHdr = allocation.saveData(0, today, paymentTable, invoiceTable, getTrxName(),"");
 		assertNotNull(allocationHdr, "Failed to create allocation header");
 	}
 
@@ -246,7 +246,7 @@ public class AllocationFormTest extends AbstractTestCase {
 		assertEquals(new BigDecimal("0.00"), allocation.getTotalDifference().setScale(2, RoundingMode.HALF_UP), "Unexpected Total Applied Difference");
 		assertTrue(allocation.isOkToAllocate(), "Invoice and payment applied total is different: " + allocation.getTotalDifference().toPlainString());
 		
-		MAllocationHdr allocationHdr = allocation.saveData(0, today, paymentTable, invoiceTable, getTrxName());
+		MAllocationHdr allocationHdr = allocation.saveData(0, today, paymentTable, invoiceTable, getTrxName(),"");
 		assertNotNull(allocationHdr, "Failed to create allocation header");
 	}
 	

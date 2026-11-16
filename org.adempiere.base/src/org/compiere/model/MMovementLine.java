@@ -227,8 +227,9 @@ public class MMovementLine extends X_M_MovementLine
 				// IDEMPIERE-2624 Cant confirm 0 qty on Movement Confirmation
 				// zero allowed in this case (action Complete and status In Progress)
 			} else {
-				log.saveError("FillMandatory", Msg.getElement(getCtx(), "MovementQty"));
-				return false;
+				//[PSI] - 8828
+//				log.saveError("FillMandatory", Msg.getElement(getCtx(), "MovementQty"));
+//				return false;
 			}
 		}
 		

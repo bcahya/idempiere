@@ -237,13 +237,22 @@ public class InventoryCountCreate extends SvrProcess
 			   .append(getSubCategoryWhereClause(p_M_Product_Category_ID))
 			   .append(")");
 	
-		//[SIS] 8392
-		if (p_SIS_Subbrand_ID != 0)
-			sql.append(" AND p.SIS_Subbrand_ID IN (?) ");
-		
-		if(p_SIS_MClass_ID != 0)
-			sql.append(" AND p.SIS_MClass_ID IN (?) ");
-		
+		//[SIS] 8392, 8998
+		if (p_SIS_Subbrand_ID != 0
+				|| p_SIS_MClass_ID != 0) {
+			String sqlAdd = "";
+			if (p_SIS_Subbrand_ID != 0) {
+				sqlAdd += " p.SIS_Subbrand_ID IN (?) ";
+			}
+			if (!"".equalsIgnoreCase(sqlAdd)) {
+				sqlAdd += " or ";
+			}
+			if (p_SIS_MClass_ID != 0) {
+				sqlAdd += " p.SIS_MClass_ID IN (?) ";
+			}
+			sql.append(" and ("+sqlAdd+") ");
+		}
+			
 		//	Do not overwrite existing records
 		if (!p_DeleteOld)
 			sql.append(" AND NOT EXISTS (SELECT * FROM M_InventoryLine il ")

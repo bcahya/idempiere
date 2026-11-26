@@ -58,6 +58,8 @@ import org.compiere.model.MToolBarButton;
 import org.compiere.model.MUserQuery;
 import org.compiere.model.MWarehouse;
 import org.compiere.model.Query;
+import org.compiere.model.X_SIS_RDO;
+import org.compiere.model.X_SIS_RDOLine;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -613,65 +615,22 @@ public class ADWindowToolbar extends ToolBar implements EventListener<Event>
 						if (qty.signum() <= 0) {
 							throw new AdempiereException("Qty must be greater than 0");
 						}
-			 
-						int loc = MLocator.getDefault((MWarehouse) m.getM_Warehouse()).getM_Locator_ID();
-						int locTo = MLocator.getDefault((MWarehouse) m.getM_WarehouseTo()).getM_Locator_ID();
-						int rdoID = m.get_ValueAsInt("SIS_RDO_ID");
-			 
-						if (rdoID > 0) {
-							int subbrand = DB.getSQLValue(trxName,
-									"SELECT SIS_Subbrand_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
-							if (subbrand != product.get_ValueAsInt("SIS_Subbrand_ID")) {
+			 						
+						X_SIS_RDO rdo = new X_SIS_RDO(Env.getCtx(),m.get_ValueAsInt("SIS_RDO_ID"), null);
+						X_SIS_RDOLine rdoLine = new X_SIS_RDOLine(Env.getCtx(),m.get_ValueAsInt("SIS_RDOLine_ID"), null);			
+						if (m.get_ValueAsInt("SIS_RDO_ID") > 0 && m.get_ValueAsInt("SIS_RDOLine_ID")> 0) {					
+							if (rdo.get_ValueAsInt("SIS_Subbrand_ID") != product.get_ValueAsInt("SIS_Subbrand_ID")) {
 								throw new AdempiereException("Product Subbrand must be equal with RDO Subbrand!");
+							}			 									 
+							BigDecimal totalQty = new BigDecimal(valueQty);
+							for(MMovementLine line : m.getLines(true)) {
+								totalQty = totalQty.add(line.getMovementQty());								
+							}							
+							if (totalQty.compareTo(rdoLine.getMovementQty()) > 0) {
+								throw new AdempiereException("Qty Product > Qty RDO Line");
 							}
-			 
-							loc = DB.getSQLValue(trxName, "SELECT M_Locator_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
-							int docType = DB.getSQLValue(trxName, "SELECT C_DocType_ID FROM SIS_RDO WHERE SIS_RDO_ID=?", rdoID);
-							locTo = MDocType.get(docType).get_ValueAsInt("SIS_LocatorIntransit_ID");
-			 
-							List<List<Object>> rdoLines = DB.getSQLArrayObjectsEx(trxName,
-									"SELECT SIS_RDOLine_ID, MovementQty FROM SIS_RDOLine "
-									+ "WHERE SIS_RDO_ID=?  ORDER BY SIS_RDOLine_ID ASC",
-									rdoID);
-			 
-							BigDecimal qtyLeft = qty;
-							if (rdoLines != null) {
-								for (List<Object> row : rdoLines) {
-									if (qtyLeft.signum() <= 0) {
-										break;
-									}
-									int rdoLineID = ((Number) row.get(0)).intValue();
-									BigDecimal rdoQty = (BigDecimal) row.get(1);
-									if (rdoQty == null) {
-										rdoQty = Env.ZERO;
-									}
-			 
-									BigDecimal mapped = DB.getSQLValueBDEx(trxName,
-											"SELECT COALESCE(SUM(MovementQty),0) FROM M_MovementLine "
-											+ "WHERE M_Movement_ID=? AND SIS_RDOLine_ID=?",
-											m.getM_Movement_ID(), rdoLineID);
-									if (mapped == null) {
-										mapped = Env.ZERO;
-									}
-			 
-									BigDecimal remaining = rdoQty.subtract(mapped);
-									if (remaining.signum() <= 0) {
-										continue;
-									}
-			 
-									BigDecimal toAdd = qtyLeft.min(remaining);
-									addToMovementLine(m, product, rdoLineID, toAdd, loc, locTo);
-									qtyLeft = qtyLeft.subtract(toAdd);
-								}
-							}
-			 
-							if (qtyLeft.signum() > 0) {
-								throw new AdempiereException("Product Subbrand must be equal with RDO Subbrand");
-							}
-						} else {
-							addToMovementLine(m, product, 0, qty, loc, locTo);
-						}
-			 
+							addToMovementLine(m, product, rdoLine.get_ID(), new BigDecimal(valueQty), rdoLine.getM_Locator_ID(), rdoLine.getM_LocatorTo_ID());
+						}			 
 						trx.commit();
 					} catch (Exception e) {
 						trx.rollback();

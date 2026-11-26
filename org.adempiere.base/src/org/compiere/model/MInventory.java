@@ -418,8 +418,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 						String docSubTypeInv = dt.getDocSubTypeInv();
 						BigDecimal qtyDiff = line.getQtyInternalUse();
 						if (MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(docSubTypeInv))
-//							qtyDiff = line.getQtyBook().subtract(line.getQtyCount());
-							qtyDiff = line.getQtyCount().subtract(line.getQtyBook()); //[SIS] - 8947
+							qtyDiff = line.getQtyBook().subtract(line.getQtyCount());
 						// verify if the ASIs are captured on lineMA
 						MInventoryLineMA mas[] = MInventoryLineMA.get(getCtx(),
 								line.getM_InventoryLine_ID(), get_TrxName());

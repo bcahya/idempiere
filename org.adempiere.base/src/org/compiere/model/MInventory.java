@@ -408,9 +408,7 @@ public class MInventory extends X_M_Inventory implements DocAction
 		// Validate mandatory ASI on lines - IDEMPIERE-1770 - ASI validation must be moved to MInventory.prepareIt
 		for (MInventoryLine line : lines) {
 			//	Product requires ASI
-			if (line.getM_AttributeSetInstance_ID() == 0
-					|| !MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(getC_DocType().getDocSubTypeInv()) //[SIS] - 8947
-					)
+			if (line.getM_AttributeSetInstance_ID() == 0)
 			{
 				MProduct product = MProduct.get(getCtx(), line.getM_Product_ID(), get_TrxName());
 				if (product != null && product.isASIMandatoryFor(null, line.isSOTrx()))
@@ -420,7 +418,8 @@ public class MInventory extends X_M_Inventory implements DocAction
 						String docSubTypeInv = dt.getDocSubTypeInv();
 						BigDecimal qtyDiff = line.getQtyInternalUse();
 						if (MDocType.DOCSUBTYPEINV_PhysicalInventory.equals(docSubTypeInv))
-							qtyDiff = line.getQtyBook().subtract(line.getQtyCount());
+//							qtyDiff = line.getQtyBook().subtract(line.getQtyCount());
+							qtyDiff = line.getQtyCount().subtract(line.getQtyBook()); //[SIS] - 8947
 						// verify if the ASIs are captured on lineMA
 						MInventoryLineMA mas[] = MInventoryLineMA.get(getCtx(),
 								line.getM_InventoryLine_ID(), get_TrxName());

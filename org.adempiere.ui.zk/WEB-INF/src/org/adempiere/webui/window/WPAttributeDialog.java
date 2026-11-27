@@ -1381,8 +1381,9 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		int docId = DB.getSQLValue(null, sqlDoctype, Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "C_DocType_ID"));
 		boolean isHide = false;
 		if(docId > 0) {
-			MDocType doc = MDocType.get(docId);
-			return doc.get_ValueAsString("SIS_AdjustmentType") != null && doc.get_ValueAsString("SIS_AdjustmentType").equals("AN");
+//			MDocType doc = MDocType.get(docId);
+//			return doc.get_ValueAsString("SIS_AdjustmentType") != null && doc.get_ValueAsString("SIS_AdjustmentType").equals("AN");
+			isHide= true;
 		}
 		return isHide;
 	}

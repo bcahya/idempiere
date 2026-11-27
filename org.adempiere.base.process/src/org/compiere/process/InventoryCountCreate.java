@@ -238,20 +238,21 @@ public class InventoryCountCreate extends SvrProcess
 			   .append(")");
 	
 		//[SIS] 8392, 8998
-		if (p_SIS_Subbrand_ID != 0
-				|| p_SIS_MClass_ID != 0) {
+		if (p_SIS_MClass_ID != 0) {
 			String sqlAdd = "";
-			if (p_SIS_Subbrand_ID != 0) {
-				sqlAdd += " p.SIS_Subbrand_ID IN (?) ";
-			}
-			if (!"".equalsIgnoreCase(sqlAdd)) {
-				sqlAdd += " or ";
-			}
 			if (p_SIS_MClass_ID != 0) {
 				sqlAdd += " p.SIS_MClass_ID IN (?) ";
 			}
 			sql.append(" and ("+sqlAdd+") ");
+		} else if (p_SIS_Subbrand_ID != 0) {
+			String sqlAdd = "";
+			if (p_SIS_Subbrand_ID != 0) {
+				sqlAdd += " p.SIS_Subbrand_ID IN (?) ";
+			}
+			sql.append(" and ("+sqlAdd+") ");
 		}
+		
+		
 			
 		//	Do not overwrite existing records
 		if (!p_DeleteOld)

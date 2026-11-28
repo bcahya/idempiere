@@ -66,6 +66,7 @@ import org.compiere.model.MAttributeSet;
 import org.compiere.model.MAttributeSetInstance;
 import org.compiere.model.MAttributeValue;
 import org.compiere.model.MDocType;
+import org.compiere.model.MInventory;
 import org.compiere.model.MLot;
 import org.compiere.model.MLotCtl;
 import org.compiere.model.MRole;
@@ -376,14 +377,13 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		else	//	Set Instance Attributes
 		{
 			Row row = new Row();
-			
 			//	New/Edit - Selection
 			if (m_M_AttributeSetInstance_ID == 0)		//	new
 				cbNewEdit.setLabel(Msg.getMsg(Env.getCtx(), "NewRecord"));
 			else
 				cbNewEdit.setLabel(Msg.getMsg(Env.getCtx(), "EditRecord"));
 			cbNewEdit.addEventListener(Events.ON_CHECK, this);
-			if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0) {			
+			if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0 && !checkInventoryNegative()) {			
 				row.appendChild(cbNewEdit);
 			}
 			if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_InOutLine_ID") == 0) {			
@@ -460,7 +460,7 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 					row = new Row();
 					row.setParent(rows);
 					m_row++;
-					if(Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0) {					
+					if(Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") == 0 && !checkInventoryNegative()) {					
 						row.appendChild(bLot);
 					}
 					bLot.addEventListener(Events.ON_CLICK, this);
@@ -549,7 +549,7 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 		row.appendChild(fieldDescription);
 		ZKUpdateUtil.setHflex(fieldDescription, "1");
 		
-		if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") > 0) {
+		if (Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "M_MovementLine_ID") > 0 && !checkInventoryNegative()) {
 			fieldLot.setDisabled(true);
 			fieldGuaranteeDate.setDisabled(true);
 			fieldLotString.setDisabled(true);
@@ -1373,6 +1373,19 @@ public class WPAttributeDialog extends Window implements EventListener<Event>
 			throw new AdempiereException(Msg.translate(Env.getCtx(), "AccessTableNoView"));
 
 		isAllowedToCreateAndUpdate = hasAccess;
+	}
+	
+	private boolean checkInventoryNegative() {
+		String sqlDoctype = "SELECT C_DocType_ID FROM C_DocType Where DocBaseType='MMI'"
+				+ " AND (DocSubTypeInv='IU' OR DocSubTypeInv IS NULL) AND C_DocType_ID=? ";
+		int docId = DB.getSQLValue(null, sqlDoctype, Env.getContextAsInt(Env.getCtx(), m_WindowNoParent, "C_DocType_ID"));
+		boolean isHide = false;
+		if(docId > 0) {
+//			MDocType doc = MDocType.get(docId);
+//			return doc.get_ValueAsString("SIS_AdjustmentType") != null && doc.get_ValueAsString("SIS_AdjustmentType").equals("AN");
+			isHide= true;
+		}
+		return isHide;
 	}
 
 } //	WPAttributeDialog

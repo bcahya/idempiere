@@ -411,11 +411,11 @@ public class CalloutInvoice extends CalloutEngine
 			rs = pstmt.executeQuery();
 			if (rs.next())
 			{
-				mTab.setValue ("PriceEntered", rs.getBigDecimal (1));
-				mTab.setValue ("PriceActual", rs.getBigDecimal (1));
-				mTab.setValue ("PriceLimit", Env.ZERO);
-				mTab.setValue ("PriceList", Env.ZERO);
-				mTab.setValue ("Discount", Env.ZERO);
+//				mTab.setValue ("PriceEntered", rs.getBigDecimal (1));
+//				mTab.setValue ("PriceActual", rs.getBigDecimal (1));
+//				mTab.setValue ("PriceLimit", Env.ZERO);
+//				mTab.setValue ("PriceList", Env.ZERO);
+//				mTab.setValue ("Discount", Env.ZERO);
 			}
 		}
 		catch (SQLException e)
